@@ -1,0 +1,11 @@
+[package]
+name = "seal_infer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ort = "=2.0.0-rc.12"
+
+[profile.release]
+opt-level = 3
+lto = true

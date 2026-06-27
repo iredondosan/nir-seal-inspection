@@ -1,0 +1,31 @@
+# ---- Python ----
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# ---- Data & annotations (large / IP — kept off git, live on the box) ----
+data/
+*.xml
+
+# ---- Model weights & ONNX exports ----
+models/
+*.pt
+*.pth
+*.onnx
+
+# ---- Generated outputs, logs, temp artifacts ----
+outputs/
+logs/
+*.data
+sym_shape_infer_temp.onnx
+
+# ---- Rust build artifacts ----
+rust_infer/target/
+
+# ---- Notebook checkpoints ----
+.ipynb_checkpoints/
+
+# ---- OS / editor ----
+.DS_Store
+*.swp
