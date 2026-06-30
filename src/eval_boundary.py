@@ -71,7 +71,7 @@ def split_map(xmlrel,imgrel):
 
 ap=argparse.ArgumentParser(); ap.add_argument("--split",default="val",choices=["val","train","all"])
 ap.add_argument("--bd",type=float,default=5.0); ap.add_argument("--model",default=MODEL); ap.add_argument("--csv",default=f"{ROOT}/outputs/eval_boundary.csv"); a=ap.parse_args()
-ck=torch.load(a.model,map_location="cpu",weights_only=False); THR=ck.get("thresh",0.5); print(f"model: {a.model}")
+ck=torch.load(a.model,map_location="cpu",weights_only=False); THR=ck.get("thresh",0.5); IMG=ck.get("img",IMG); print(f"model: {a.model}  input res: {IMG}")
 m=smp.Unet(ck["encoder"],encoder_weights=None,in_channels=3,classes=1); m.load_state_dict(ck["state_dict"]); m.eval()
 dev="cuda" if torch.cuda.is_available() else "cpu"; m=m.to(dev)
 

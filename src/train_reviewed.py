@@ -11,14 +11,19 @@ import segmentation_models_pytorch as smp
 SEED=42; random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
 ROOT="/home/ubuntu/TFM/seal-inspection"
 DATASETS=[("data/annotations/prod2_reviewed.xml","data/images/prod2","prod2"),
-          ("data/annotations/prod1.xml",      "data/images/prod1","prod1"),
-          ("data/annotations/prod3.xml",      "data/images/prod3","prod3"),
-          ("data/annotations/prod4.xml",      "data/images/prod4","prod4"),
-          ("data/annotations/prod5.xml",      "data/images/prod5","prod5")]
+          ("data/annotations/prod1_reviewed.xml","data/images/prod1","prod1"),
+          ("data/annotations/prod3_reviewed.xml","data/images/prod3","prod3"),
+          ("data/annotations/prod4_reviewed.xml","data/images/prod4","prod4"),
+          ("data/annotations/prod5_reviewed.xml","data/images/prod5","prod5"),
+          ("data/annotations/prod6_reviewed.xml","data/images/prod6", "prod6"),
+          ("data/annotations/prod6_bad_reviewed.xml","data/images/prod6_bad","prod6")]
 OUT=f"{ROOT}/outputs/training_reviewed"; os.makedirs(OUT,exist_ok=True)
 BASE=f"{ROOT}/models/best_lite.pt"
 CKPT=f"{ROOT}/models/best_lite_reviewed.pt"; ONNX=f"{ROOT}/models/seal_lite_reviewed.onnx"
-IMG=384; BATCH=16; EPOCHS=60; SAMPLES=400; VAL_PER=2; THRESH=0.5; MARGIN=40
+import argparse
+_ap=argparse.ArgumentParser(); _ap.add_argument("--img",type=int,default=512); _ap.add_argument("--batch",type=int,default=12); _ap.add_argument("--epochs",type=int,default=60); _ap.add_argument("--samples",type=int,default=400); _a,_=_ap.parse_known_args()
+IMG=_a.img; BATCH=_a.batch; EPOCHS=_a.epochs; SAMPLES=_a.samples; VAL_PER=2; THRESH=0.5; MARGIN=40
+CKPT=f"{ROOT}/models/best_lite_reviewed_{IMG}.pt"; ONNX=f"{ROOT}/models/seal_lite_reviewed_{IMG}.onnx"
 P_CONTAM=0.8   # fraction of train samples that get contamination pasted on the seal band
 CONTAM_XML=f"{ROOT}/data/annotations/contaminants.xml"
 CONTAM_EXCLUDE={"seal_1302_1780665903828_raw.png"}   # held out for A/B test
@@ -69,9 +74,10 @@ for xmlrel,imgrel,prod in DATASETS:
         gc=norm(g[y0:y1,x0:x1]); samps.append((np.stack([gc,gc,gc],-1), m[y0:y1,x0:x1], nm))
     random.Random(SEED).shuffle(samps)
     forced=[s for s in samps if s[2] in FORCE_TRAIN]; rest=[s for s in samps if s[2] not in FORCE_TRAIN]
-    val   += [(im,mk,prod) for im,mk,_ in rest[:VAL_PER]]
-    train += [(im,mk) for im,mk,_ in rest[VAL_PER:]+forced]
-    print(f"{prod}: {len(samps)} samples -> {VAL_PER} val / {len(samps)-VAL_PER} train (forced-train: {len(forced)})",flush=True)
+    vp = VAL_PER if len(rest) >= 6 else 0          # tiny products (e.g. prod6=3) -> all to train, no val
+    val   += [(im,mk,prod) for im,mk,_ in rest[:vp]]
+    train += [(im,mk) for im,mk,_ in rest[vp:]+forced]
+    print(f"{prod}: {len(samps)} samples -> {vp} val / {len(samps)-vp} train (forced-train: {len(forced)})",flush=True)
 print(f"TOTAL train {len(train)}  val {len(val)}",flush=True)
 
 def add_contamination(img3, band):
@@ -232,11 +238,16 @@ def val_dice():
     return {k:np.mean(v) for k,v in per.items()}, np.mean([d for v in per.values() for d in v])
 opt=torch.optim.AdamW(model.parameters(),lr=1e-4,weight_decay=1e-4)
 sch=torch.optim.lr_scheduler.CosineAnnealingLR(opt,T_max=EPOCHS)
+use_amp=(dev=="cuda"); scaler=torch.amp.GradScaler("cuda",enabled=use_amp)
+print(f"IMG={IMG} BATCH={BATCH} EPOCHS={EPOCHS} SAMPLES={SAMPLES} amp={use_amp}",flush=True)
 best=0.; best_state=None
 for ep in range(1,EPOCHS+1):
     model.train(); tot=n=0
     for x,y in train_dl:
-        x,y=x.to(dev),y.to(dev); opt.zero_grad(); lo=model(x); L=bce(lo,y)+dloss(lo,y); L.backward(); opt.step(); tot+=L.item()*x.size(0); n+=x.size(0)
+        x,y=x.to(dev),y.to(dev); opt.zero_grad()
+        with torch.amp.autocast("cuda",enabled=use_amp):
+            lo=model(x); L=bce(lo,y)+dloss(lo,y)
+        scaler.scale(L).backward(); scaler.step(opt); scaler.update(); tot+=L.item()*x.size(0); n+=x.size(0)
     sch.step(); per,ov=val_dice()
     if ov>=best: best=ov; best_state={k:v.detach().cpu().clone() for k,v in model.state_dict().items()}
     if ep%5==0 or ep==1:

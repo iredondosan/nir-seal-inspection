@@ -49,11 +49,11 @@ def simp(c,ow,oh, step=9.0, corner_deg=7.0, straight_every=16, win=2):
     out[:,0]=np.clip(out[:,0],0,ow-1); out[:,1]=np.clip(out[:,1],0,oh-1); return out
 def pstr(p): return ";".join(f"{x:.2f},{y:.2f}" for x,y in p)
 
-ap=argparse.ArgumentParser(); ap.add_argument("--input",required=True); ap.add_argument("--output",required=True); ap.add_argument("--model",default=MODEL); a=ap.parse_args()
-ck=torch.load(a.model,map_location="cpu",weights_only=False); THR=ck.get("thresh",0.5)
+ap=argparse.ArgumentParser(); ap.add_argument("--input",required=True); ap.add_argument("--output",required=True); ap.add_argument("--model",default=MODEL); ap.add_argument("--step",type=float,default=9.0); a=ap.parse_args()
+ck=torch.load(a.model,map_location="cpu",weights_only=False); THR=ck.get("thresh",0.5); IMG=ck.get("img",IMG); print(f"input res: {IMG}")
 m=smp.Unet(ck["encoder"],encoder_weights=None,in_channels=3,classes=1); m.load_state_dict(ck["state_dict"]); m.eval()
 dev="cuda" if torch.cuda.is_available() else "cpu"; m=m.to(dev)
-files=sorted(glob.glob(os.path.join(a.input,"*_raw.png"))); os.makedirs(os.path.dirname(a.output) or ".",exist_ok=True)
+files=(sorted(glob.glob(os.path.join(a.input,"*_raw.png"))) or sorted(glob.glob(os.path.join(a.input,"*.jpg"))) or sorted(glob.glob(os.path.join(a.input,"*.png")))); os.makedirs(os.path.dirname(a.output) or ".",exist_ok=True)
 rows=[]; ok=skip=0
 for i,p in enumerate(files):
     g=cv2.imread(p,cv2.IMREAD_GRAYSCALE)
@@ -64,7 +64,7 @@ for i,p in enumerate(files):
     full=np.zeros((oh,ow),np.float32); full[y0:y1,x0:x1]=cv2.resize(prob,(cwd,ch)); mask=(full>THR).astype(np.uint8)*255
     r=ring_polys(mask); polys=""
     if r is not None and len(r[0])>=8 and len(r[1])>=8:
-        for cnt in r: polys+=f'    <polygon label="sellado" source="auto" occluded="0" points="{pstr(simp(cnt,ow,oh))}" z_order="0"></polygon>\n'
+        for cnt in r: polys+=f'    <polygon label="sellado" source="auto" occluded="0" points="{pstr(simp(cnt,ow,oh,step=a.step))}" z_order="0"></polygon>\n'
         ok+=1
     else: skip+=1
     rows.append(f'  <image id="{i}" name="{os.path.basename(p)}" width="{ow}" height="{oh}">\n{polys}  </image>')

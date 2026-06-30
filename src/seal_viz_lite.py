@@ -85,7 +85,7 @@ def main():
     ck=torch.load(a.weights,map_location=dev,weights_only=False); IMG=ck["img"]; THR=ck.get("thresh",0.5)
     model=smp.Unet(ck["encoder"],encoder_weights=None,in_channels=3,classes=1); model.load_state_dict(ck["state_dict"]); model=model.to(dev).eval()
     os.makedirs(a.output,exist_ok=True)
-    files=sorted(glob.glob(os.path.join(a.input,"*_raw.png")))
+    files=(sorted(glob.glob(os.path.join(a.input,"*_raw.png"))) or sorted(glob.glob(os.path.join(a.input,"*.jpg"))) or sorted(glob.glob(os.path.join(a.input,"*.png"))))
     if a.limit: files=files[:a.limit]
     ok=0
     for p in files:
@@ -105,7 +105,9 @@ def main():
         cw=pv.shape[1]
         # strip at native res: sample from full raw image along ring; width = rows*crop_w so each row = crop_w (no resize)
         strip=unroll(g,outer,inner,a.strip_h,a.rows*cw)
-        cv2.imwrite(os.path.join(a.output,os.path.basename(p).replace("_raw.png","_viz.png")),
+        base=os.path.splitext(os.path.basename(p))[0]
+        if base.endswith("_raw"): base=base[:-4]
+        cv2.imwrite(os.path.join(a.output,base+"_viz.png"),
                     compose(pv,strip,a.rows,clean)); ok+=1
     print(f"{a.output}: {ok}/{len(files)} written")
 
