@@ -150,6 +150,30 @@ def polygons_to_band_mask(outer: np.ndarray, inner: np.ndarray, height: int, wid
     return m
 
 
+def _clean_contour(contour: np.ndarray, n: int = 360, k: int = 7) -> np.ndarray:
+    """Resample a contour to `n` arc-length points and circularly smooth it.
+
+    A predicted mask's boundary — especially the inner edge around product
+    overflow — can have thousands of ragged pixel-level points. Unrolling that
+    directly distorts the strip and breaks defect detection. Smoothing it to a
+    clean ring (like a hand-drawn polygon) fixes that.
+    """
+    P = contour.reshape(-1, 2).astype(np.float32)
+    if len(P) < 8:
+        return P
+    loop = np.r_[P, P[:1]]
+    d = np.r_[0, np.cumsum(np.hypot(*np.diff(loop, axis=0).T))]
+    if d[-1] < 1:
+        return P
+    t = np.linspace(0, d[-1], n, endpoint=False)
+    r = np.stack([np.interp(t, d, loop[:, 0]), np.interp(t, d, loop[:, 1])], 1)
+    ker = np.ones(k) / k
+    for ax in (0, 1):
+        a = r[:, ax]
+        r[:, ax] = np.convolve(np.r_[a[-k:], a, a[:k]], ker, "same")[k:-k]
+    return r
+
+
 def mask_to_ring(mask: np.ndarray, band_px: int = 90):
     """Extract (outer, inner) ring contours from a predicted binary mask.
 
@@ -181,7 +205,8 @@ def mask_to_ring(mask: np.ndarray, band_px: int = 90):
         if not ic:
             return None, None
         inner = max(ic, key=cv2.contourArea)
-    return outer.reshape(-1, 2).astype(np.float32), inner.reshape(-1, 2).astype(np.float32)
+    # smooth the ragged predicted contours into clean rings before they're unrolled
+    return _clean_contour(outer), _clean_contour(inner)
 
 
 def simplify_contour(contour: np.ndarray, ow: int, oh: int,
@@ -261,22 +286,58 @@ def _is_ccw(poly: np.ndarray) -> bool:
 def unroll_maps(outer: np.ndarray, inner: np.ndarray, strip_h: int, strip_w: int):
     """Build the (map_x, map_y) sampling grids that flatten the ring into a strip.
 
-    For each of `strip_w` positions around the perimeter we linearly interpolate
-    `strip_h` points from the OUTER edge (top of the strip) to the INNER edge
-    (bottom). The same maps can be applied to the image AND to a defect mask, so
-    the defect deforms identically to the pixels it sits on (no train/inference
-    mismatch).
+    For each of `strip_w` positions around the perimeter we sample `strip_h`
+    points marching inward along the OUTER contour's local normal (top of the
+    strip = outer edge, bottom = inner edge). The same maps can be applied to the
+    image AND to a defect mask, so the defect deforms identically to the pixels it
+    sits on (no train/inference mismatch).
+
+    This is the "perpendicular-to-outer" method (correspondence-free). The earlier
+    outer<->inner interpolation lives in `unroll_maps_legacy`; the production
+    detector ensembles the two (see pipeline.py) because each catches defects the
+    other smears.
+    """
+    # Perpendicular-to-outer sampling: walk inward along the SMOOTHED OUTER contour's
+    # local normal to a depth = band width (distance to the inner edge). This is
+    # correspondence-free (no fragile outer<->inner point pairing), so the strip stays
+    # stable for thin defects even when the predicted contour differs slightly from GT.
+    O = _resample_closed(outer, strip_w)
+    O[:, 0] = _smooth_closed(O[:, 0]); O[:, 1] = _smooth_closed(O[:, 1])
+    T = np.roll(O, -1, 0) - np.roll(O, 1, 0)
+    Tn = np.maximum(np.hypot(T[:, 0], T[:, 1]), 1e-6)
+    Nrm = np.stack([-T[:, 1] / Tn, T[:, 0] / Tn], 1)            # contour normal
+    cw = int(max(outer[:, 0].max(), inner[:, 0].max())) + 10
+    ch = int(max(outer[:, 1].max(), inner[:, 1].max())) + 10
+    fill_out = np.zeros((ch, cw), np.uint8); cv2.drawContours(fill_out, [outer.astype(np.int32)], -1, 255, -1)
+    probe = (O + 4 * Nrm).astype(int)                          # orient the normal INWARD
+    if (fill_out[np.clip(probe[:, 1], 0, ch - 1), np.clip(probe[:, 0], 0, cw - 1)] > 0).mean() < 0.5:
+        Nrm = -Nrm
+    fill_in = np.zeros((ch, cw), np.uint8); cv2.drawContours(fill_in, [inner.astype(np.int32)], -1, 255, -1)
+    dt_in = cv2.distanceTransform(255 - fill_in, cv2.DIST_L2, 5)  # distance to inner edge
+    L = _smooth_closed(dt_in[np.clip(O[:, 1].astype(int), 0, ch - 1), np.clip(O[:, 0].astype(int), 0, cw - 1)])
+    a = np.linspace(-0.15, 1.15, strip_h)[:, None]             # 0=outer edge, 1=inner edge, +/-15% margin
+    map_x = (O[:, 0][None, :] + a * (L[None, :] * Nrm[:, 0][None, :])).astype(np.float32)
+    map_y = (O[:, 1][None, :] + a * (L[None, :] * Nrm[:, 1][None, :])).astype(np.float32)
+    return map_x, map_y
+
+
+def unroll_maps_legacy(outer: np.ndarray, inner: np.ndarray, strip_h: int, strip_w: int):
+    """Legacy unroll: linearly interpolate each column from the OUTER edge to the
+    paired point on the INNER edge (the two contours are resampled, wound the same
+    way and start-aligned). Kept as the second branch of the production ensemble —
+    it catches defects the perpendicular-to-outer method smears, and vice-versa.
+    The defect model `defect_strip.prev.pt` was trained on strips from THIS unroll,
+    so the two must stay paired.
     """
     O = _resample_closed(outer, strip_w)
     I = _resample_closed(inner, strip_w)
-    if _is_ccw(O) != _is_ccw(I):          # make both wind the same way
+    if _is_ccw(O) != _is_ccw(I):                      # wind both the same way
         I = I[::-1]
     j = int(np.argmin(np.hypot(I[:, 0] - O[0, 0], I[:, 1] - O[0, 1])))  # align start points
     I = np.roll(I, -j, axis=0)
-    for arr in (O, I):                    # smooth so the strip isn't jittery
-        arr[:, 0] = _smooth_closed(arr[:, 0])
-        arr[:, 1] = _smooth_closed(arr[:, 1])
-    a = np.linspace(0, 1, strip_h)[:, None]
+    for arr in (O, I):
+        arr[:, 0] = _smooth_closed(arr[:, 0]); arr[:, 1] = _smooth_closed(arr[:, 1])
+    a = np.linspace(-0.15, 1.15, strip_h)[:, None]    # +/-15% margin past both edges
     map_x = (O[:, 0][None, :] * (1 - a) + I[:, 0][None, :] * a).astype(np.float32)
     map_y = (O[:, 1][None, :] * (1 - a) + I[:, 1][None, :] * a).astype(np.float32)
     return map_x, map_y

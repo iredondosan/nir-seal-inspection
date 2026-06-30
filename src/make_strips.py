@@ -29,12 +29,21 @@ def resample(poly,n):
 def csmooth(a,k=15): ker=np.ones(k)/k; return np.convolve(np.r_[a[-k:],a,a[:k]],ker,"same")[k:-k]
 def ccw(p): return cv2.contourArea(p.astype(np.float32),oriented=True)>0
 def unroll_maps(outer,inner,Hs,Ws):
-    O=resample(outer,Ws); I=resample(inner,Ws)
-    if ccw(O)!=ccw(I): I=I[::-1]
-    j=int(np.argmin(np.hypot(I[:,0]-O[0,0],I[:,1]-O[0,1]))); I=np.roll(I,-j,axis=0)
-    for arr in (O,I): arr[:,0]=csmooth(arr[:,0]); arr[:,1]=csmooth(arr[:,1])
-    a=np.linspace(0,1,Hs)[:,None]
-    return (O[:,0][None,:]*(1-a)+I[:,0][None,:]*a).astype(np.float32),(O[:,1][None,:]*(1-a)+I[:,1][None,:]*a).astype(np.float32)
+    # Perpendicular-to-outer sampling: walk inward along the smoothed OUTER contour's normal
+    # to a local depth = band width (distance to inner edge). Correspondence-free -> stable for
+    # thin defects. MUST match seal_inspection/core.py unroll_maps so train/inference strips agree.
+    O=resample(outer,Ws); O[:,0]=csmooth(O[:,0]); O[:,1]=csmooth(O[:,1])
+    T=np.roll(O,-1,0)-np.roll(O,1,0); Tn=np.maximum(np.hypot(T[:,0],T[:,1]),1e-6)
+    N=np.stack([-T[:,1]/Tn,T[:,0]/Tn],1)
+    cw=int(max(outer[:,0].max(),inner[:,0].max()))+10; ch=int(max(outer[:,1].max(),inner[:,1].max()))+10
+    fo=np.zeros((ch,cw),np.uint8); cv2.drawContours(fo,[outer.astype(np.int32)],-1,255,-1)
+    pr=(O+4*N).astype(int)
+    if (fo[np.clip(pr[:,1],0,ch-1),np.clip(pr[:,0],0,cw-1)]>0).mean()<0.5: N=-N
+    fi=np.zeros((ch,cw),np.uint8); cv2.drawContours(fi,[inner.astype(np.int32)],-1,255,-1)
+    dt=cv2.distanceTransform(255-fi,cv2.DIST_L2,5)
+    L=csmooth(dt[np.clip(O[:,1].astype(int),0,ch-1),np.clip(O[:,0].astype(int),0,cw-1)])
+    a=np.linspace(-0.15,1.15,Hs)[:,None]   # 0=outer edge, 1=inner edge, +/-15% margin
+    return (O[:,0][None,:]+a*(L[None,:]*N[:,0][None,:])).astype(np.float32),(O[:,1][None,:]+a*(L[None,:]*N[:,1][None,:])).astype(np.float32)
 
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--out",default=f"{ROOT}/data/strips"); a=ap.parse_args()
