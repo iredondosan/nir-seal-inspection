@@ -9,9 +9,13 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import segmentation_models_pytorch as smp
 
-ROOT="/home/ubuntu/TFM/seal-inspection"; STR=f"{ROOT}/data/strips"
+import argparse
+_ap=argparse.ArgumentParser(); _ap.add_argument("--strips",default="data/strips"); _ap.add_argument("--out",default="models/defect_strip.pt")
+_ap.add_argument("--epochs",type=int,default=60); _ap.add_argument("--scratch",action="store_true",help="random init (no ImageNet) for the ablation")
+_a,_=_ap.parse_known_args()
+ROOT="/home/ubuntu/TFM/seal-inspection"; STR=f"{ROOT}/{_a.strips}"; OUT=f"{ROOT}/{_a.out}"; SCRATCH=_a.scratch
 SEED=42; random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
-HS=128; WS=1536; BATCH=8; EPOCHS=60; STEPS=1200; THR=0.5; P_PASTE=0.7
+HS=128; WS=1536; BATCH=8; EPOCHS=_a.epochs; STEPS=1200; THR=0.5; P_PASTE=0.7
 MEAN=(.485,.456,.406); STD=(.229,.224,.225)
 dev="cuda" if torch.cuda.is_available() else "cpu"
 
@@ -69,7 +73,8 @@ class DS(torch.utils.data.Dataset):
         o=aug(image=np.stack([img]*3,-1),mask=m); return o["image"],o["mask"].float().unsqueeze(0)
 dl=torch.utils.data.DataLoader(DS(STEPS),batch_size=BATCH,shuffle=True,num_workers=4)
 
-model=smp.Unet("resnet18",encoder_weights="imagenet",in_channels=3,classes=1).to(dev)
+model=smp.Unet("resnet18",encoder_weights=(None if SCRATCH else "imagenet"),in_channels=3,classes=1).to(dev)
+print(("FROM SCRATCH (random init)" if SCRATCH else "ImageNet-pretrained")+f" resnet18 | strips={STR} | {EPOCHS} epochs -> {OUT}",flush=True)
 def dice_l(l,t,e=1.): p=torch.sigmoid(l); return (1-((2*(p*t).sum((2,3))+e)/(p.sum((2,3))+t.sum((2,3))+e))).mean()
 bce=nn.BCEWithLogitsLoss(pos_weight=torch.tensor(20.).to(dev))
 opt=torch.optim.AdamW(model.parameters(),lr=2e-4,weight_decay=1e-4)
@@ -112,7 +117,7 @@ for ep in range(1,EPOCHS+1):
         if au>=best_auroc: best_auroc=au; best_state={k:v.detach().cpu().clone() for k,v in model.state_dict().items()}
 if best_state: model.load_state_dict(best_state)
 au,pd,(f1,pr,rc,th)=evaluate()
-torch.save({"state_dict":model.state_dict(),"encoder":"resnet18","HS":HS,"WS":WS,"thr":THR,"score_thr":float(th),"mean":MEAN,"std":STD},f"{ROOT}/models/defect_strip.pt")
+torch.save({"state_dict":model.state_dict(),"encoder":"resnet18","HS":HS,"WS":WS,"thr":THR,"score_thr":float(th),"mean":MEAN,"std":STD},OUT)
 print(f"\nFINAL test: AUROC {au:.3f}  pixelDice {pd:.3f}  bestF1 {f1:.3f} (P{pr:.2f} R{rc:.2f} @score>{th:.2f})",flush=True)
 # save test prediction overlays
 os.makedirs(f"{ROOT}/outputs/defect_test",exist_ok=True); model.eval()

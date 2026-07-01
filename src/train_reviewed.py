@@ -21,12 +21,16 @@ OUT=f"{ROOT}/outputs/training_reviewed"; os.makedirs(OUT,exist_ok=True)
 BASE=f"{ROOT}/models/best_lite.pt"
 CKPT=f"{ROOT}/models/best_lite_reviewed.pt"; ONNX=f"{ROOT}/models/seal_lite_reviewed.onnx"
 import argparse
-_ap=argparse.ArgumentParser(); _ap.add_argument("--img",type=int,default=512); _ap.add_argument("--batch",type=int,default=12); _ap.add_argument("--epochs",type=int,default=60); _ap.add_argument("--samples",type=int,default=400); _a,_=_ap.parse_known_args()
-IMG=_a.img; BATCH=_a.batch; EPOCHS=_a.epochs; SAMPLES=_a.samples; VAL_PER=2; THRESH=0.5; MARGIN=40
-CKPT=f"{ROOT}/models/best_lite_reviewed_{IMG}.pt"; ONNX=f"{ROOT}/models/seal_lite_reviewed_{IMG}.onnx"
+_ap=argparse.ArgumentParser(); _ap.add_argument("--img",type=int,default=512); _ap.add_argument("--batch",type=int,default=12); _ap.add_argument("--epochs",type=int,default=60); _ap.add_argument("--samples",type=int,default=400)
+_ap.add_argument("--scratch",action="store_true",help="random init (no ImageNet/base) -> train from scratch for the ablation")
+_ap.add_argument("--ckpt",default="",help="output checkpoint path (default models/best_lite_reviewed_<IMG>.pt)")
+_a,_=_ap.parse_known_args()
+IMG=_a.img; BATCH=_a.batch; EPOCHS=_a.epochs; SAMPLES=_a.samples; SCRATCH=_a.scratch; VAL_PER=2; THRESH=0.5; MARGIN=40
+CKPT=_a.ckpt if _a.ckpt else f"{ROOT}/models/best_lite_reviewed_{IMG}.pt"; ONNX=CKPT.replace(".pt",".onnx")
 P_CONTAM=0.8   # fraction of train samples that get contamination pasted on the seal band
 CONTAM_XML=f"{ROOT}/data/annotations/contaminants.xml"
-CONTAM_EXCLUDE={"seal_1302_1780665903828_raw.png"}   # held out for A/B test
+HOLD=set(l.strip() for l in open(f"{ROOT}/data/holdout.txt")) if os.path.exists(f"{ROOT}/data/holdout.txt") else set()
+CONTAM_EXCLUDE={"seal_1302_1780665903828_raw.png"}|{f"{h}.png" for h in HOLD}|{f"{h}.jpg" for h in HOLD}   # +global hold-out
 FORCE_TRAIN={"seal_1998_1780688689500_raw.png"}      # barcode-over-seal: keep in train, never val
 P_PRINT=0.6   # fraction of train samples that get printed-graphic cut-outs pasted on the band (mask unchanged)
 dev="cuda" if torch.cuda.is_available() else "cpu"
@@ -100,24 +104,32 @@ def add_contamination(img3, band):
         out=out*(1-a)+tex*a
     return np.clip(out,0,255).astype(np.uint8)
 
-def load_contaminants(xml):
-    """Cut out real contaminant instances (patch + feathered alpha) from a 'defect'-labelled XML."""
+def load_contaminants(xml=None):
+    """Cut out EVERY labelled defect/liquid instance (patch + feathered alpha) from ALL product
+    annotation files in DATASETS -> a large, realistic library of 'stuff on the band' to paste onto the
+    seal (mask unchanged). Replaces the old standalone contaminants.xml so the augmentation draws on every
+    labelled defect in the dataset, not a hand-picked file."""
     insts=[]
-    if not os.path.exists(xml): return insts
-    for node in ET.parse(xml).getroot().findall("image"):
-        name=node.get("name")
-        if name in CONTAM_EXCLUDE: continue
-        hits=glob.glob(f"{ROOT}/data/images/*/{name}")
-        if not hits: continue
-        g=cv2.imread(hits[0], cv2.IMREAD_GRAYSCALE)
-        for pg in node.findall("polygon"):
-            pts=parse_pts(pg.get("points")).astype(np.int32)
-            x,y,bw,bh=cv2.boundingRect(pts)
-            if bw<4 or bh<4: continue
-            patch=g[y:y+bh, x:x+bw].copy()
-            al=np.zeros((bh,bw),np.uint8); cv2.fillPoly(al,[pts-[x,y]],255)
-            al=cv2.GaussianBlur(al,(0,0),2).astype(np.float32)/255.0   # feather edges
-            insts.append((patch,al))
+    for xmlrel,imgrel,prod in DATASETS:
+        xmlp=f"{ROOT}/{xmlrel}"
+        if not os.path.exists(xmlp): continue
+        for node in ET.parse(xmlp).getroot().findall("image"):
+            name=node.get("name")
+            if name in CONTAM_EXCLUDE: continue
+            polys=[pg for pg in node.findall("polygon") if pg.get("label") in ("defect","liquid")]
+            if not polys: continue
+            p=f"{ROOT}/{imgrel}/{name}"
+            if not os.path.exists(p): continue
+            g=cv2.imread(p, cv2.IMREAD_GRAYSCALE)
+            if g is None: continue
+            for pg in polys:
+                pts=parse_pts(pg.get("points")).astype(np.int32)
+                x,y,bw,bh=cv2.boundingRect(pts)
+                if bw<4 or bh<4: continue
+                patch=g[y:y+bh, x:x+bw].copy()
+                al=np.zeros((bh,bw),np.uint8); cv2.fillPoly(al,[pts-[x,y]],255)
+                al=cv2.GaussianBlur(al,(0,0),2).astype(np.float32)/255.0   # feather edges
+                insts.append((patch,al))
     return insts
 
 def paste_contaminants(img3, band, insts):
@@ -146,8 +158,8 @@ def paste_contaminants(img3, band, insts):
         out[iy0:iy1,ix0:ix1]=np.clip(reg*(1-aa)+pp*aa,0,255).astype(np.uint8)
     return out
 
-CONTAM=load_contaminants(CONTAM_XML)
-print(f"contaminant instances loaded: {len(CONTAM)} (excluded {CONTAM_EXCLUDE})",flush=True)
+CONTAM=load_contaminants()
+print(f"defect cut-outs for band augmentation (from all labelled packs): {len(CONTAM)} (excluded {CONTAM_EXCLUDE})",flush=True)
 
 def load_prints():
     """Auto-extract printed-graphic cut-outs (barcode/nutrition/text) from prod2 flanges. No labels needed:
@@ -219,11 +231,14 @@ class TR(torch.utils.data.Dataset):
 train_dl=torch.utils.data.DataLoader(TR(train,SAMPLES),batch_size=BATCH,shuffle=True)
 etf_=etf()
 
-# ---- model: fine-tune from best_lite.pt ----
+# ---- model: fine-tune from best_lite.pt, OR random init for the from-scratch ablation ----
 base=torch.load(BASE,map_location="cpu"); ENC=base["encoder"]
 model=smp.Unet(ENC,encoder_weights=None,in_channels=3,classes=1)
-model.load_state_dict(base["state_dict"]); model=model.to(dev)
-print(f"fine-tuning {ENC} from {BASE} (prod2 val_dice {base['val_dice']:.3f})",flush=True)
+if SCRATCH:
+    print(f"FROM SCRATCH: random-init {ENC} (no ImageNet, no base), {EPOCHS} epochs",flush=True)
+else:
+    model.load_state_dict(base["state_dict"]); print(f"fine-tuning {ENC} from {BASE} (prod2 val_dice {base['val_dice']:.3f})",flush=True)
+model=model.to(dev)
 
 def dloss(l,t,e=1.): p=torch.sigmoid(l); return (1-((2*(p*t).sum((2,3))+e)/(p.sum((2,3))+t.sum((2,3))+e))).mean()
 bce=nn.BCEWithLogitsLoss()
