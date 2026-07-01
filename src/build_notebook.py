@@ -37,6 +37,7 @@ warnings.filterwarnings("ignore")
 import numpy as np, cv2, torch
 import matplotlib.pyplot as plt
 import pandas as pd
+from torchinfo import summary
 
 R = "/home/ubuntu/TFM/seal-inspection"
 sys.path.insert(0, R)
@@ -435,6 +436,15 @@ if RUN_TRAINING and not os.path.exists(_ck):       # train only if the checkpoin
 seal, sk = core.load_unet(_ck, device)             # use this seal for all sections below
 print("seal model ready | encoder", sk["encoder"], "| val Dice", round(float(sk.get("val_dice", 0)), 3))''')
 
+# ----------------------------------------------------------------------------- 3b seal architecture
+md("""### 3b · Seal model — full architecture (every layer)
+
+Layer-by-layer view of the seal U-Net (MobileNetV3-small encoder + U-Net decoder). `torchinfo` traces a
+forward pass at the training resolution and lists every module with its output shape and parameter count.""")
+code('''print(summary(seal, input_size=(1, 3, sk["img"], sk["img"]), depth=5,
+              col_names=("output_size", "num_params", "mult_adds"),
+              row_settings=("var_names",), verbose=0))''')
+
 # ----------------------------------------------------------------------------- 4 mask<->poly
 md("""## 4 · Mask ↔ polygon conversion
 
@@ -727,6 +737,14 @@ branches = [dict(name="perpendicular",  model=defm, unroll=core.unroll_maps,    
             dict(name="correspondence", model=legm, unroll=core.unroll_maps_legacy, hs=lk["HS"], ws=lk["WS"], thr=DTHR)]
 print("defect models ready + ensemble branches rebuilt")''')
 
+# ----------------------------------------------------------------------------- 6b defect architecture
+md("""### 6b · Defect model — full architecture (every layer)
+
+Layer-by-layer view of the defect U-Net (resnet18 encoder + U-Net decoder) at the strip resolution.""")
+code('''print(summary(defm, input_size=(1, 3, HS, WS), depth=5,
+              col_names=("output_size", "num_params", "mult_adds"),
+              row_settings=("var_names",), verbose=0))''')
+
 # ----------------------------------------------------------------------------- 7 ensemble
 md("""## 7 · End-to-end pipeline & the 2-unroll ensemble
 
@@ -902,6 +920,71 @@ if os.path.exists(sp_seal) and os.path.exists(sp_def):
     print("the augmentation-heavy defect head is nearly initialisation-agnostic.")
 else:
     print("scratch models not found — run train_*.py --scratch first (see text above).")''')
+
+# ----------------------------------------------------------------------------- 11 custom tiny net
+md("""## 11 · A custom compact defect network (`TinyUNet`)
+
+The §10 ablation showed the **defect head is initialisation-agnostic** — so it's the one place a small
+purpose-built network can match accuracy at a fraction of the cost. `TinyUNet` (in
+`seal_inspection/tiny_unet.py`) is a **grayscale-native (1-channel)** classic U-Net: 4 down levels
+[16,32,64,128], DoubleConv stages, max-pool down / transposed-conv up, skip connections, 1×1 head.
+**≈0.9M params vs the resnet18-UNet's 14.3M.** It was trained *from scratch* on the hold-out-excluded
+strips (`src/train_tiny.py`). Below: its full architecture, then an accuracy / size / CPU-latency
+comparison against the resnet18-UNet on the same hold-out.""")
+code('''import inspect
+from seal_inspection.tiny_unet import TinyUNet
+import seal_inspection.tiny_unet as _tu
+print(inspect.getsource(_tu.DoubleConv)); print(inspect.getsource(_tu.TinyUNet))
+tiny = TinyUNet(base=16, in_ch=1).to(device)
+_p = f"{R}/models/tiny_defect.pt"
+if os.path.exists(_p):
+    tiny.load_state_dict(torch.load(_p, map_location=device, weights_only=False)["state_dict"])
+tiny.eval()
+print(summary(tiny, input_size=(1, 1, HS, WS), depth=4,
+              col_names=("output_size", "num_params", "mult_adds"), row_settings=("var_names",), verbose=0))''')
+code('''import glob, time, segmentation_models_pytorch as smp
+if os.path.exists(_p):
+    def sc_tiny(s):
+        x = torch.from_numpy(((s/255.0 - 0.5)/0.5).astype(np.float32))[None, None].to(device)
+        with torch.no_grad(): p = torch.sigmoid(tiny(x))[0, 0].cpu().numpy()
+        return float(cv2.GaussianBlur(p, (0, 0), 2).max())
+    def sc_r18(s): return float(cv2.GaussianBlur(defect_prob(defm, s), (0, 0), 2).max())
+    st, sr, lab = [], [], []
+    for ip in sorted(glob.glob(f"{R}/data/strips/test/img/*.png")):
+        s = cv2.imread(ip, 0); m = cv2.imread(ip.replace("/img/", "/mask/"), 0)
+        st.append(sc_tiny(s)); sr.append(sc_r18(s)); lab.append(1 if m.sum() > 0 else 0)
+    st, sr, lab = np.array(st), np.array(sr), np.array(lab)
+    def au(s):
+        pos, neg = s[lab == 1], s[lab == 0]
+        return float(np.mean([(a > b)+0.5*(a == b) for a in pos for b in neg]))
+    # params + CPU latency (deployment target)
+    def cpu_lat(m, ch):
+        m = m.cpu().eval(); x = torch.randn(1, ch, HS, WS)
+        with torch.no_grad():
+            for _ in range(3): m(x)
+            t = time.time()
+            for _ in range(12): m(x)
+        return (time.time()-t)/12*1000
+    tcpu = TinyUNet(base=16, in_ch=1); tcpu.load_state_dict(torch.load(_p, map_location="cpu", weights_only=False)["state_dict"])
+    rcpu = smp.Unet("resnet18", encoder_weights=None, in_channels=3, classes=1)
+    rcpu.load_state_dict(torch.load(f"{R}/models/defect_strip.pt", map_location="cpu", weights_only=False)["state_dict"])
+    pt = sum(p.numel() for p in tcpu.parameters()); pr = sum(p.numel() for p in rcpu.parameters())
+    lt, lr = cpu_lat(tcpu, 1), cpu_lat(rcpu, 3)
+    df = pd.DataFrame([
+        dict(model="resnet18-UNet (shipped)", params_M=round(pr/1e6, 2), GTstrip_AUROC=round(au(sr), 3), CPU_ms=round(lr, 1)),
+        dict(model="TinyUNet (custom, scratch)", params_M=round(pt/1e6, 2), GTstrip_AUROC=round(au(st), 3), CPU_ms=round(lt, 1))])
+    print(df.to_string(index=False))
+    print(f"\\nTinyUNet is {pr/pt:.1f}x fewer params and {lr/lt:.1f}x faster on CPU, at AUROC {au(st):.3f} vs {au(sr):.3f}.")
+    fig, ax = plt.subplots(1, 3, figsize=(14, 3.6))
+    for k, (t, vals) in enumerate([("params (M)", [pr/1e6, pt/1e6]), ("GT-strip AUROC", [au(sr), au(st)]), ("CPU ms/strip", [lr, lt])]):
+        ax[k].bar(["resnet18", "TinyUNet"], vals, color=["#37a", "#b63"]); ax[k].set_title(t)
+    ax[1].set_ylim(0.85, 1.0); plt.tight_layout(); plt.show()
+else:
+    print("tiny_defect.pt not found — run: PYTHONPATH=. python src/train_tiny.py")''')
+md("""**Takeaway.** A **~15× smaller, grayscale-native** network trained **from scratch** matches the shipped
+resnet18-UNet on defect detection while running markedly faster on CPU — because the defect task is
+augmentation-rich and simple enough that a compact custom net suffices. (The seal stage is a different
+story: there pretraining and capacity both matter, so it keeps the MobileNetV3 encoder.)""")
 
 nb = {"cells": cells,
       "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
