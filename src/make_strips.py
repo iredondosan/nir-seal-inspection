@@ -15,10 +15,9 @@ SOURCES=[("data/annotations/prod1_reviewed.xml","data/images/prod1","all"),
          ("data/annotations/prod3_reviewed.xml","data/images/prod3","all"),
          ("data/annotations/prod4_reviewed.xml","data/images/prod4","all"),
          ("data/annotations/prod5_reviewed.xml","data/images/prod5","all"),
-         ("data/annotations/prod6_reviewed.xml","data/images/prod6","good"),
-         ("data/annotations/prod6_bad_reviewed.xml","data/images/prod6_bad","defect_reviewed")]
-FORCE_TEST={"prod6_bad_003.jpg"}                         # hold out 1 distinct prod6 defect
-FORCE_TRAIN={"prod6_bad_001.jpg","prod6_bad_002.jpg"}    # other 2 distinct prod6 defects -> train
+         ("data/annotations/prod6_reviewed.xml","data/images/prod6","all")]
+FORCE_TEST=set()      # merged prod6: prod6 never in test (holdout.txt controls test)
+FORCE_TRAIN=set()
 
 def norm(g):
     lo,hi=np.percentile(g,[1,99.5]); hi=max(hi,lo+1); return np.clip((g.astype(np.float32)-lo)/(hi-lo)*255,0,255).astype(np.uint8)

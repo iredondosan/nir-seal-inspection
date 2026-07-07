@@ -5,8 +5,7 @@ import xml.etree.ElementTree as ET
 ROOT="/home/ubuntu/TFM/seal-inspection"
 SRC=[("prod1","data/annotations/prod1_reviewed.xml"),("prod2","data/annotations/prod2_reviewed.xml"),
      ("prod3","data/annotations/prod3_reviewed.xml"),("prod4","data/annotations/prod4_reviewed.xml"),
-     ("prod5","data/annotations/prod5_reviewed.xml"),("prod6","data/annotations/prod6_reviewed.xml"),
-     ("prod6_bad","data/annotations/prod6_bad_reviewed.xml")]
+     ("prod5","data/annotations/prod5_reviewed.xml"),("prod6","data/annotations/prod6_reviewed.xml")]
 def tags(n): return {t.get("label") for t in n.findall("tag")}
 def has_seal(n): return len([p for p in n.findall("polygon") if p.get("label")=="sellado"])>=2
 def is_def(n): return any(p.get("label") in ("defect","liquid") for p in n.findall("polygon"))

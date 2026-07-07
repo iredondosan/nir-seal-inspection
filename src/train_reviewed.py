@@ -15,8 +15,7 @@ DATASETS=[("data/annotations/prod2_reviewed.xml","data/images/prod2","prod2"),
           ("data/annotations/prod3_reviewed.xml","data/images/prod3","prod3"),
           ("data/annotations/prod4_reviewed.xml","data/images/prod4","prod4"),
           ("data/annotations/prod5_reviewed.xml","data/images/prod5","prod5"),
-          ("data/annotations/prod6_reviewed.xml","data/images/prod6", "prod6"),
-          ("data/annotations/prod6_bad_reviewed.xml","data/images/prod6_bad","prod6")]
+          ("data/annotations/prod6_reviewed.xml","data/images/prod6","prod6")]
 OUT=f"{ROOT}/outputs/training_reviewed"; os.makedirs(OUT,exist_ok=True)
 BASE=f"{ROOT}/models/best_lite.pt"
 CKPT=f"{ROOT}/models/best_lite_reviewed.pt"; ONNX=f"{ROOT}/models/seal_lite_reviewed.onnx"

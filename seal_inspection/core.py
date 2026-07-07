@@ -191,7 +191,7 @@ def mask_to_ring(mask: np.ndarray, band_px: int = 90):
     cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     if not cnts:
         return None, None
-    outer = cv2.convexHull(np.vstack([c.reshape(-1, 2) for c in cnts]))
+    outer = max(cnts, key=cv2.contourArea)  # raw contour follows the wavy edge (was convexHull, which straightened concave sides)
     fill = np.zeros_like(m)
     cv2.drawContours(fill, [outer], -1, 255, -1)
     hole = cv2.subtract(fill, m)

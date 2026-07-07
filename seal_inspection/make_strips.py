@@ -35,11 +35,10 @@ SOURCES = [
     ("data/annotations/prod1_reviewed.xml", "data/images/prod1", "all"),
     ("data/annotations/prod2_reviewed.xml", "data/images/prod2", "all"),
     ("data/annotations/prod3_reviewed.xml", "data/images/prod3", "all"),
-    ("data/annotations/prod6_reviewed.xml", "data/images/prod6", "good"),
-    ("data/annotations/prod6_bad_reviewed.xml", "data/images/prod6_bad", "defect_reviewed"),
+    ("data/annotations/prod6_reviewed.xml", "data/images/prod6", "all"),
 ]
-FORCE_TEST = {"prod6_bad_003.jpg"}                       # hold out 1 distinct prod6 defect
-FORCE_TRAIN = {"prod6_bad_001.jpg", "prod6_bad_002.jpg"}  # the other 2 -> train
+FORCE_TEST = set()      # merged prod6: prod6 never in test
+FORCE_TRAIN = set()
 
 
 def collect_packs(root: str):

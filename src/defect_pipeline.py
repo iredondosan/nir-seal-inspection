@@ -30,7 +30,7 @@ def ring_contours(mask, band_px=90):
     m=cv2.morphologyEx(mask,cv2.MORPH_OPEN,np.ones((9,9),np.uint8)); m=cv2.morphologyEx(m,cv2.MORPH_CLOSE,np.ones((35,35),np.uint8))
     cnts,_=cv2.findContours(m,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
     if not cnts: return None,None
-    outer=cv2.convexHull(np.vstack([c.reshape(-1,2) for c in cnts]))
+    outer=max(cnts,key=cv2.contourArea)  # raw contour follows wave (was convexHull)
     fill=np.zeros_like(m); cv2.drawContours(fill,[outer],-1,255,-1); hole=cv2.subtract(fill,m)
     c2=[c for c in cv2.findContours(hole,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)[0] if cv2.contourArea(c)>0.2*cv2.contourArea(outer)]
     if c2: inner=max(c2,key=cv2.contourArea)

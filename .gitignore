@@ -29,3 +29,9 @@ rust_infer/target/
 # ---- OS / editor ----
 .DS_Store
 *.swp
+
+# backups / old data (not versioned)
+data_old/
+*.hullbak
+*.prehullfix.bak
+*.bak_preexec
