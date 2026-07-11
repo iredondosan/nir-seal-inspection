@@ -53,3 +53,6 @@ demo/samples/*
 !demo/samples/.gitkeep
 demo/out/
 demo/__pycache__/
+
+# ---- thesis figures show real branded packs (client IP) — not published ----
+docs/thesis_figures/*.png

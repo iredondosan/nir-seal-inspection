@@ -76,12 +76,11 @@ An interactive **Streamlit** app runs the whole pipeline on CPU (**ONNX Runtime,
 
 ```bash
 pip install -r demo/requirements.txt
-# download the demo bundle (ONNX models + sample packs) from the latest Release
-# into demo/models/ and demo/samples/, then:
-cd demo && streamlit run app.py    # opens http://localhost:8501
+# download the ONNX models from the latest Release into demo/models/, then:
+cd demo && streamlit run app.py    # http://localhost:8501 — use "Subir imagen" for your own NIR pack
 ```
 
-The images (client IP) and model weights are **not** in git; the demo assets (5 ONNX models + sample packs) are published under [Releases](../../releases). The demo is self-contained — it does not require the training stack.
+The client's NIR images are proprietary and are **not** shared, so the demo ships **no sample images** — use the *upload* mode with your own grayscale NIR pack. Only the model weights (5 ONNX, published under [Releases](../../releases)) are provided. The demo is self-contained — it does not require the training stack.
 
 ## Deployment
 

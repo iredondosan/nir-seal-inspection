@@ -15,12 +15,12 @@ streamlit run app.py
 
 Se abre en el navegador (http://localhost:8501).
 
-> **Assets del demo (no versionados).** Los modelos ONNX (`models/`) y las piezas de
-> ejemplo (`samples/`) no están en git por tamaño y confidencialidad. Descarga el *demo
-> bundle* desde el **Release** del repositorio y descomprímelo aquí (`demo/models/`, `demo/samples/`).
+> **Assets del demo (no versionados).** Los modelos ONNX (`models/`) no están en git;
+> descárgalos del **Release** del repositorio a `demo/models/`. **No se publican imágenes
+> de ejemplo** (confidencialidad del cliente): usa el modo «Subir imagen».
 
 ## Uso
-- **Barra lateral:** elige una pieza de ejemplo (`samples/`) o sube tu propia imagen NIR.
+- **Barra lateral:** sube tu propia imagen NIR (**no se incluyen piezas de ejemplo** por confidencialidad del cliente).
 - **Umbral de decisión:** slider que fija el punto de operación; al bajarlo, el sistema
   es más sensible (más detecciones y más falsas alarmas). Se actualiza en vivo.
 - **Paneles:** (1) sellado predicho, (2) tira desenrollada con el defecto, (3) resultado
@@ -32,7 +32,7 @@ app.py             UI Streamlit
 pipeline.py        pipeline de 2 etapas (ONNX Runtime)
 pipeline_core.py   geometría (recorte, mask->anillo, desenrollado) en numpy/OpenCV
 models/            seal.onnx, defect.onnx
-samples/           imágenes NIR de ejemplo
+samples/           (vacío — sube tus propias imágenes NIR)
 ```
 
 ## Modelos (seleccionables en la barra lateral)
@@ -53,5 +53,5 @@ samples/           imágenes NIR de ejemplo
 El desglose de tiempos por etapa (que muestra la app) evidencia que **el sellado es el cuello de botella**.
 Cambiar de modelo en vivo permite contemplar el ahorro de tiempo y las ablaciones del TFM.
 
-> Las imágenes de sellado son propiedad del cliente y confidenciales; solo se incluyen
-> unas pocas piezas de ejemplo con fines de demostración.
+> Las imágenes de sellado son propiedad del cliente y confidenciales; **no se incluyen
+> piezas de ejemplo** — usa el modo «Subir imagen» con tus propias capturas NIR.
