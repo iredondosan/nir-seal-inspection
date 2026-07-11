@@ -1,3 +1,10 @@
+"""LOPO del sellado (Tabla 4.3): validación cruzada dejando un producto fuera.
+
+Para cada producto (prod1..prod5) entrena la U-Net de sellado con los otros cuatro, desde el
+codificador ImageNet (sin fuga entre productos), y evalúa zero-shot en el excluido (cero de
+sus etiquetas). Determinista (SEED=42): Dice zero-shot por producto, media 0.955 +/- 0.010.
+El dict INS (Dice "en muestra" de referencia) está fijado a mano. Ver docs/EXPERIMENTS.md.
+"""
 import os, glob, random, numpy as np, cv2, torch, torch.nn as nn
 import albumentations as A
 from albumentations.pytorch import ToTensorV2

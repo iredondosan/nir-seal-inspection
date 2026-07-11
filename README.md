@@ -4,7 +4,7 @@
 
 A NIR line-scan camera images trays crossing the gap between two conveyors. The goal is to inspect the heat-sealed flange (the *seal*) of each tray for contamination and sealing defects. Because the camera is **free-running** (no encoder trigger), packs appear with non-rigid wavy distortion, so the pipeline **follows the real seal edges** instead of globally rectifying the image.
 
-This repository accompanies a Master's thesis (TFM). It contains the full source used to **train, evaluate and deploy** the system, and — crucially — a table that maps **every number and figure in the thesis to the exact script that produced it** (see [`REPRODUCE.md`](REPRODUCE.md)). The full system design and a data-flow diagram are in [`ARCHITECTURE.md`](ARCHITECTURE.md).
+This repository accompanies a Master's thesis (TFM). It contains the full source used to **train, evaluate and deploy** the system, and — crucially — a table that maps **every number and figure in the thesis to the exact script that produced it** (see [`REPRODUCE.md`](REPRODUCE.md)). The full system design and a data-flow diagram are in [`ARCHITECTURE.md`](ARCHITECTURE.md). Each experiment's design and caveats are in [`EXPERIMENTS.md`](EXPERIMENTS.md).
 
 ---
 
