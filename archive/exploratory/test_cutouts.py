@@ -2,7 +2,7 @@
 """Standalone check: how many defect/liquid cut-outs does the new all-packs gatherer pull?"""
 import os, numpy as np, cv2
 import xml.etree.ElementTree as ET
-ROOT="/home/ubuntu/TFM/seal-inspection"
+from seal_inspection.paths import ROOT
 DATASETS=[("data/annotations/prod2_reviewed.xml","data/images/prod2","prod2"),
           ("data/annotations/prod1_reviewed.xml","data/images/prod1","prod1"),
           ("data/annotations/prod3_reviewed.xml","data/images/prod3","prod3"),

@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 import segmentation_models_pytorch as smp
 
 SEED=42; random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
-ROOT="/home/ubuntu/TFM/seal-inspection"
+from seal_inspection.paths import ROOT
 DATASETS=[("data/annotations/annotations.xml","data/images/prod2","prod2"),
           ("data/annotations/prod1.xml",      "data/images/prod1","prod1"),
           ("data/annotations/prod3.xml",      "data/images/prod3","prod3"),

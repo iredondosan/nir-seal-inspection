@@ -1,6 +1,6 @@
 import glob, os, numpy as np, cv2
 from seal_inspection import core
-R = "/home/ubuntu/TFM/seal-inspection"
+from seal_inspection.paths import ROOT as R
 H = set(l.split(",")[0] for l in open(f"{R}/data/holdout_labels.csv").read().splitlines()[1:] if l.strip())
 RES = 192
 

@@ -4,7 +4,7 @@ For every test strip: predicted seal -> core.unroll_maps (new) -> defect score. 
 AUROC + recall/FP at a few thresholds, and the seal_2260 score specifically."""
 import glob, os, numpy as np, cv2, torch
 from seal_inspection import core
-R = "/home/ubuntu/TFM/seal-inspection"
+from seal_inspection.paths import ROOT as R
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 seal, sk = core.load_unet(f"{R}/models/best_lite_reviewed_1280.pt", dev)
 defm, dk = core.load_unet(f"{R}/models/defect_strip.pt", dev)

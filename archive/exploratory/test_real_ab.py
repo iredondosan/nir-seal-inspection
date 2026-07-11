@@ -1,6 +1,6 @@
 import sys, cv2, numpy as np, torch, os
 import segmentation_models_pytorch as smp
-ROOT="/home/ubuntu/TFM/seal-inspection"
+from seal_inspection.paths import ROOT
 OLD=f"{ROOT}/models/best_lite_multiprod_prev_backup.pt"; NEW=f"{ROOT}/models/best_lite_multiprod.pt"
 IMG=384; MARGIN=40; MEAN=np.array((.485,.456,.406),np.float32); STD=np.array((.229,.224,.225),np.float32)
 def norm(g):

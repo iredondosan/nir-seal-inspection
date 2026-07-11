@@ -5,7 +5,7 @@ NEW unroll: sample along the inward normal of the SMOOTHED OUTER contour, to a l
 Shows GT-seal and PRED-seal strips for both methods, with the defect overlaid, to check consistency."""
 import numpy as np, cv2, torch
 from seal_inspection import core, cvat
-R = "/home/ubuntu/TFM/seal-inspection"; NAME = "seal_2260_1780692167999_raw.png"; HS, WS, MARG = 128, 1536, 0.15
+from seal_inspection.paths import ROOT as R; NAME = "seal_2260_1780692167999_raw.png"; HS, WS, MARG = 128, 1536, 0.15
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 seal, sk = core.load_unet(f"{R}/models/best_lite_reviewed_1280.pt", dev)
 g = cv2.imread(f"{R}/data/images/prod2/{NAME}", cv2.IMREAD_GRAYSCALE); H, W = g.shape

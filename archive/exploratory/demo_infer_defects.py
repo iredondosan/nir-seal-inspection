@@ -1,7 +1,7 @@
 import cv2, numpy as np, torch, glob, random, xml.etree.ElementTree as ET
 import segmentation_models_pytorch as smp
 random.seed(2); np.random.seed(2)
-ROOT="/home/ubuntu/TFM/seal-inspection"; MODEL=f"{ROOT}/models/best_lite_multiprod.pt"
+from seal_inspection.paths import ROOT; MODEL=f"{ROOT}/models/best_lite_multiprod.pt"
 CONTAM_XML=f"{ROOT}/data/annotations/contaminants.xml"; IMG=384; MARGIN=40
 MEAN=np.array((.485,.456,.406),np.float32); STD=np.array((.229,.224,.225),np.float32)
 def norm(g):

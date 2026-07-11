@@ -3,7 +3,7 @@
 is the defect even inside the predicted seal band? is it visible in the unrolled strips?"""
 import glob, os, numpy as np, cv2, torch
 from seal_inspection import core, cvat
-R = "/home/ubuntu/TFM/seal-inspection"; DTHR = 0.43
+from seal_inspection.paths import ROOT as R; DTHR = 0.43
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 seal, sk = core.load_unet(f"{R}/models/best_lite_reviewed_1280.pt", dev)
 defm, dk = core.load_unet(f"{R}/models/defect_strip.pt", dev)          # perpendicular

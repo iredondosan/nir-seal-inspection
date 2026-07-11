@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Measure pack-crop dimensions per product to pick a 'native' input size."""
 import glob, numpy as np, cv2
-ROOT="/home/ubuntu/TFM/seal-inspection"; MARGIN=40
+from seal_inspection.paths import ROOT; MARGIN=40
 def norm(g):
     lo,hi=np.percentile(g,[1,99.5]); hi=max(hi,lo+1); return np.clip((g.astype(np.float32)-lo)/(hi-lo)*255,0,255).astype(np.uint8)
 def cc(N):

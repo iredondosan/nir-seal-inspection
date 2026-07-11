@@ -1,6 +1,6 @@
 import cv2, numpy as np, random, glob, xml.etree.ElementTree as ET
 random.seed(4); np.random.seed(4)
-ROOT="/home/ubuntu/TFM/seal-inspection"
+from seal_inspection.paths import ROOT
 def norm(g):
     lo,hi=np.percentile(g,[1,99.5]); hi=max(hi,lo+1); return np.clip((g.astype(np.float32)-lo)/(hi-lo)*255,0,255).astype(np.uint8)
 def cc(N):

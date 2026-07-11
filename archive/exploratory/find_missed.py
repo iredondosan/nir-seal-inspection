@@ -2,7 +2,7 @@
 """List the lowest-scoring (missed) defect packs end-to-end for a defect model, with product + defect area."""
 import glob, os, argparse, numpy as np, cv2, torch
 from seal_inspection import core
-R = "/home/ubuntu/TFM/seal-inspection"
+from seal_inspection.paths import ROOT as R
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 ap = argparse.ArgumentParser(); ap.add_argument("--defect", required=True); a = ap.parse_args()
 seal, sk = core.load_unet(f"{R}/models/best_lite_reviewed_1280.pt", dev)

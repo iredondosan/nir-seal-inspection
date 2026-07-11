@@ -6,7 +6,7 @@ Reports each model's recall, identifies the supervised-missed defect(s), and whe
 model recovers them -> the union recall and its false-alarm cost."""
 import glob, os, numpy as np, cv2, torch
 import segmentation_models_pytorch as smp, timm
-R = "/home/ubuntu/TFM/seal-inspection"
+from seal_inspection.paths import ROOT as R
 MEAN = np.array((.485, .456, .406), np.float32); STD = np.array((.229, .224, .225), np.float32)
 tMEAN = torch.tensor((.485, .456, .406)).view(1, 3, 1, 1); tSTD = torch.tensor((.229, .224, .225)).view(1, 3, 1, 1)
 dev = "cuda" if torch.cuda.is_available() else "cpu"

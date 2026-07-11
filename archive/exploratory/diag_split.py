@@ -2,7 +2,7 @@
 """Is seal_2260 in the seal TRAIN or VAL split, and does the predicted seal include the defect in the band?"""
 import random, cv2, numpy as np, torch
 from seal_inspection import core, cvat
-R = "/home/ubuntu/TFM/seal-inspection"; NAME = "seal_2260_1780692167999_raw.png"; SEED = 42; VAL_PER = 2
+from seal_inspection.paths import ROOT as R; NAME = "seal_2260_1780692167999_raw.png"; SEED = 42; VAL_PER = 2
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 
 # replicate the seal trainer's per-product split for prod2

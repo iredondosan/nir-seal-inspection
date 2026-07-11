@@ -4,7 +4,7 @@ OLD (correspondence) strip, max-pool. Old unroll reconstructed locally (matches 
 Reports recall/FP/AUROC for OLD-only, NEW-only, and MAX ensemble, plus the weakest defects."""
 import glob, os, numpy as np, cv2, torch
 from seal_inspection import core
-R = "/home/ubuntu/TFM/seal-inspection"
+from seal_inspection.paths import ROOT as R
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 seal, sk = core.load_unet(f"{R}/models/best_lite_reviewed_1280.pt", dev)
 newm, dk = core.load_unet(f"{R}/models/defect_strip.pt", dev)

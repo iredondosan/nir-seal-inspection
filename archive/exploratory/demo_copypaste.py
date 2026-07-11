@@ -1,6 +1,6 @@
 import cv2, numpy as np, random, glob, os, xml.etree.ElementTree as ET
 random.seed(5); np.random.seed(5)
-ROOT="/home/ubuntu/TFM/seal-inspection"; CONTAM_XML=f"{ROOT}/data/annotations/contaminants.xml"
+from seal_inspection.paths import ROOT; CONTAM_XML=f"{ROOT}/data/annotations/contaminants.xml"
 MARGIN=40
 def norm(g):
     lo,hi=np.percentile(g,[1,99.5]); hi=max(hi,lo+1); return np.clip((g.astype(np.float32)-lo)/(hi-lo)*255,0,255).astype(np.uint8)

@@ -1,6 +1,6 @@
 import cv2, numpy as np, torch, glob
 import segmentation_models_pytorch as smp
-ROOT="/home/ubuntu/TFM/seal-inspection"; MODEL=f"{ROOT}/models/best_lite_multiprod.pt"
+from seal_inspection.paths import ROOT; MODEL=f"{ROOT}/models/best_lite_multiprod.pt"
 IMG=384; MARGIN=40; MEAN=np.array((.485,.456,.406),np.float32); STD=np.array((.229,.224,.225),np.float32)
 def norm(g):
     lo,hi=np.percentile(g,[1,99.5]); hi=max(hi,lo+1); return np.clip((g.astype(np.float32)-lo)/(hi-lo)*255,0,255).astype(np.uint8)

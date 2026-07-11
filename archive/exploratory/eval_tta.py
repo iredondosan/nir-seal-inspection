@@ -3,7 +3,7 @@
 max-pool the defect score. Compare baseline vs TTA (AUROC + recall/FP @0.43) and check seal_2260."""
 import glob, os, numpy as np, cv2, torch
 from seal_inspection import core, cvat
-R = "/home/ubuntu/TFM/seal-inspection"
+from seal_inspection.paths import ROOT as R
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 seal, sk = core.load_unet(f"{R}/models/best_lite_reviewed_1280.pt", dev)
 defm, dk = core.load_unet(f"{R}/models/defect_strip.pt", dev)

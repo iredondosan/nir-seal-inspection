@@ -1,7 +1,7 @@
 import cv2, numpy as np, torch, random, xml.etree.ElementTree as ET, os
 import segmentation_models_pytorch as smp
 random.seed(11); np.random.seed(11)
-ROOT="/home/ubuntu/TFM/seal-inspection"
+from seal_inspection.paths import ROOT
 OLD=f"{ROOT}/models/best_lite_multiprod_noaug_backup.pt"
 NEW=f"{ROOT}/models/best_lite_multiprod.pt"
 XML=f"{ROOT}/data/annotations/annotations.xml"; IMGDIR=f"{ROOT}/data/images/prod2"

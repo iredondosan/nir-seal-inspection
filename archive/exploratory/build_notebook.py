@@ -39,7 +39,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from torchinfo import summary
 
-R = "/home/ubuntu/TFM/seal-inspection"
+from seal_inspection.paths import ROOT as R
 sys.path.insert(0, R)
 from seal_inspection import core, cvat
 from seal_inspection.pipeline import process_pack
