@@ -44,7 +44,7 @@ figures/             Scripts that regenerate the thesis figures
 deploy/              ONNX export, INT8 quantization, CPU benchmarks, e2e demo
 rust_infer/          Rust ONNX inference app (edge deployment)
 demo/                Interactive Streamlit demo (ONNX, CPU; assets via Releases)
-docs/                SOURCE_OF_TRUTH.md (internal ledger), project log, thesis figures
+docs/                SOURCE_OF_TRUTH.md  (result-to-code traceability ledger)
 archive/exploratory/ One-off diagnostics and non-reported experiments (kept for history)
 ```
 
