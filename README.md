@@ -94,6 +94,10 @@ The seal stage is exported to **INT8 ONNX (~4.2 MB)** and runs via the Rust `ort
 
 The NIR images and annotations are proprietary and are **not** released. The code is fully public and every result is traceable to its script; the demo bundle provides a runnable subset. Contact the author for research access to additional data.
 
+## Contact
+
+Questions, bug reports, or help reproducing results — please [open an issue](https://github.com/iredondosan/nir-seal-inspection/issues).
+
 ## Citation
 
 ```bibtex
