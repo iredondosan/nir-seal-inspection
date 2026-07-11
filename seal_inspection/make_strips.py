@@ -37,7 +37,7 @@ SOURCES = [
     ("data/annotations/prod3_reviewed.xml", "data/images/prod3", "all"),
     ("data/annotations/prod6_reviewed.xml", "data/images/prod6", "all"),
 ]
-FORCE_TEST = set()      # merged prod6: prod6 never in test
+FORCE_TEST = set()      # prod6 is train-only: never in test
 FORCE_TRAIN = set()
 
 

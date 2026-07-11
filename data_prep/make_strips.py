@@ -16,7 +16,7 @@ SOURCES=[("data/annotations/prod1_reviewed.xml","data/images/prod1","all"),
          ("data/annotations/prod4_reviewed.xml","data/images/prod4","all"),
          ("data/annotations/prod5_reviewed.xml","data/images/prod5","all"),
          ("data/annotations/prod6_reviewed.xml","data/images/prod6","all")]
-FORCE_TEST=set()      # merged prod6: prod6 never in test (holdout.txt controls test)
+FORCE_TEST=set()      # prod6 is train-only: never in test (holdout.txt controls test)
 FORCE_TRAIN=set()
 
 def norm(g):

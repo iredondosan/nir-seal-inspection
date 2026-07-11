@@ -45,7 +45,7 @@ Funciones clave (`core.py`):
 | `src/train_defect.py` | **`defect_strip.pt`** (defecto desplegado) | ResNet18 U-Net, ImageNet, tira **128×1536**, AdamW **2e-4**, wd 1e-4, **ReduceLROnPlateau** (factor 0.5, pac. 8), **EARLY STOPPING** (paciencia **25** sobre pérdida de validación, **máx. 200 ép.**), BCE(**pos_weight=20**)+Dice, batch 8, 1200 pasos/ép., **val 15 % a nivel de pieza** (fuera de train y de la biblioteca copy-paste), sobremuestreo 50 %, copy-paste **P=0.7**, **`--sealjit`** (jitter vertical del sellado), `--roll`, `--kfold`. Test evaluado **una vez**. |
 | `src/train_tiny.py` | `tiny_defect.pt` (TinyUNet) | TinyUNet 1-canal (0.93 M), 4 niveles [16,32,64,128], **desde cero**, early stopping (paciencia 30). |
 | `src/kfold_cv.py` | `defect_kf0..kf4.pt` | Validación cruzada de **5 pliegues** del defecto → **AUROC 0.975 ± 0.008**. |
-| `src/lopo_cv.py` | (eval) | Sellado: **leave-one-product-out** (Dice zero-shot 0.955±0.010). prod6/prod6: **leave-one-pack-out** (9/9 capturas, 3/3 packs). |
+| `src/lopo_cv.py` | (eval) | Sellado: **leave-one-product-out** (Dice zero-shot 0.955±0.010). prod6: **leave-one-pack-out** (9/9 capturas, 3/3 packs). |
 | `src/anomaly_patchcore.py` | (línea base) | PatchCore sobre tiras correctas → **AUROC 0.800**. |
 | `src/train_resnet34.py` | `defect` base pesado | Línea base de mayor capacidad para §4.10 (24.4 M). |
 | `src/quantize_int8.py` | ONNX INT8 | Cuantización INT8 del sellado (384², ~4.2 MB, ~20 ms/4hilos). |
@@ -85,7 +85,7 @@ Hold-out global vigente: **179 packs = 156 correctos / 23 defectuosos** (`data/h
 | Punto de operación @0.50 | **recall 21/23**, FP **8/156 = 5.1 %** | 2 FN: `seal_1313` (prod3), `seal_2381` (prod2), ambos score ≈ 0.000 |
 | PatchCore (línea base anomalía) | AUROC 0.800 | `anomaly_patchcore.py` |
 | TinyUNet | AUROC 0.972 · 0.93 M (15.5× menos) | `tiny_defect.pt` |
-| prod6/prod6 — LOPO por pack | 9/9 capturas, 3/3 packs (≥0.989) | `lopo_cv.py` |
+| prod6 — LOPO por pack | 9/9 capturas, 3/3 packs (≥0.989) | `lopo_cv.py` |
 
 ### Verificación tabla a tabla (2026-07-10, modelos + hold-out actuales)
 

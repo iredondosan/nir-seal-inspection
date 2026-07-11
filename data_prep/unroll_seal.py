@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 import numpy as np, cv2, os
 
 XML="/Users/nacho/Downloads/annotations 2.xml"
-BASE="/Volumes/T7/fti-seal/good-prod6/batches/734883295_Product_1/images"
+BASE="data/images/prod6"   # set to your pack-image folder
 OUT="/Users/nacho/Downloads/seal_strips"; os.makedirs(OUT,exist_ok=True)
 Hs,Ws=128,1024   # fixed output height (across seal) x width (perimeter)
 

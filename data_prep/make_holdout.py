@@ -16,7 +16,7 @@ SOURCES = [("data/annotations/prod1_reviewed.xml", "prod1", "all"),
            ("data/annotations/prod2_reviewed.xml", "prod2", "all"),
            ("data/annotations/prod3_reviewed.xml", "prod3", "all"),
            ("data/annotations/prod4_reviewed.xml", "prod4", "all"),
-           ("data/annotations/prod5_reviewed.xml", "prod5", "all")]  # prod6 (prod6) is train-only, never in the hold-out
+           ("data/annotations/prod5_reviewed.xml", "prod5", "all")]  # prod6 is train-only, never in the hold-out
 
 def tagset(im): return {t.get("label") for t in im.findall("tag")}
 

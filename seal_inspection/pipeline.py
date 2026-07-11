@@ -28,7 +28,7 @@ from .core import IMAGENET_MEAN, IMAGENET_STD
 
 
 def find_images(folder: str) -> list[str]:
-    """Collect pack images (handles both '*_raw.png' products and '*.jpg' prod6 sets)."""
+    """Collect pack images (handles both '*_raw.png' and '*.jpg' products)."""
     for pat in ("*_raw.png", "*.jpg", "*.png"):
         files = sorted(glob.glob(os.path.join(folder, pat)))
         if files:
