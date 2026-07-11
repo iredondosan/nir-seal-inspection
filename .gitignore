@@ -56,3 +56,9 @@ demo/__pycache__/
 
 # ---- thesis figures show real branded packs (client IP) — not published ----
 docs/thesis_figures/*.png
+
+# ---- stray diagnostics / generated notebooks (may embed branded packs) ----
+fp_diagnosis.png
+rename_prod6.sh
+seal_inspection_walkthrough.ipynb
+*_walkthrough.ipynb
