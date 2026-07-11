@@ -7,13 +7,22 @@ veredicto final CORRECTO/DEFECTO. **Corre en CPU** (ONNX Runtime, sin GPU ni PyT
 
 ## Instalación y ejecución
 
+Descarga los modelos del Release en `models/`:
+
 ```bash
-python -m venv .venv && source .venv/bin/activate      # (Windows: .venv\Scripts\activate)
+gh release download v1.0.0 -R iredondosan/nir-seal-inspection -D models
+```
+
+Prepara el entorno y ejecuta (CPU, ONNX Runtime, sin PyTorch):
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Se abre en el navegador (http://localhost:8501).
+En Windows, activa el entorno con `.venv\Scripts\activate`. La app se abre en http://localhost:8501.
 
 > **Assets del demo (no versionados).** Los modelos ONNX (`models/`) no están en git;
 > descárgalos del **Release** del repositorio a `demo/models/`. **No se publican imágenes

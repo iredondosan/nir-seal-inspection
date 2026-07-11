@@ -79,9 +79,12 @@ An interactive **Streamlit** app runs the whole pipeline on CPU (**ONNX Runtime,
 
 ```bash
 pip install -r demo/requirements.txt
-# download the ONNX models from the latest Release into demo/models/, then:
-cd demo && streamlit run app.py    # http://localhost:8501 — use "Subir imagen" for your own NIR pack
+gh release download v1.0.0 -R iredondosan/nir-seal-inspection -D demo/models
+cd demo
+streamlit run app.py
 ```
+
+The app opens at http://localhost:8501 — use the *upload* mode for your own NIR pack.
 
 The client's NIR images are proprietary and are **not** shared, so the demo ships **no sample images** — use the *upload* mode with your own grayscale NIR pack. Only the model weights (5 ONNX, published under [Releases](../../releases)) are provided. The demo is self-contained — it does not require the training stack.
 
