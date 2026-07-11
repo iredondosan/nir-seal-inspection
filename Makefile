@@ -40,5 +40,5 @@ errors:       ## Error analysis of hold-out FN/FP (§5.4)
 deploy-onnx:  ## Export ONNX + INT8 quantize + CPU benchmark
 	$(PYTHON) deploy/quantize_int8.py
 	$(PYTHON) deploy/bench_cpu.py
-demo:         ## End-to-end demo on the sample packs (demo/samples)
-	$(PYTHON) demo/demo.py
+demo:         ## Launch the interactive Streamlit demo (ONNX, CPU)
+	cd demo && streamlit run app.py

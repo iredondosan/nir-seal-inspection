@@ -37,11 +37,6 @@ data_old/
 *.bak_preexec
 
 # ---- Demo assets (published via GitHub Releases, not git) ----
-demo/samples/*
-demo/weights/*
-!demo/samples/.gitkeep
-!demo/weights/.gitkeep
-demo/out/
 
 # ---- build artifacts ----
 *.egg-info/
@@ -50,3 +45,11 @@ demo/out/
 docs/SYSTEM_REPORT.md
 docs/SYSTEM_REPORT.pdf
 docs/REORG_MIGRATION.md
+
+# ---- Demo assets (via GitHub Releases, not git) ----
+demo/models/*
+demo/samples/*
+!demo/models/.gitkeep
+!demo/samples/.gitkeep
+demo/out/
+demo/__pycache__/

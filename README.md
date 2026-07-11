@@ -45,7 +45,7 @@ data_prep/           Dataset construction + CVAT-assisted annotation
 figures/             Scripts that regenerate the thesis figures
 deploy/              ONNX export, INT8 quantization, CPU benchmarks, e2e demo
 rust_infer/          Rust ONNX inference app (edge deployment)
-demo/                Runnable demo on a few sample packs (weights via Releases)
+demo/                Interactive Streamlit demo (ONNX, CPU; assets via Releases)
 docs/                SOURCE_OF_TRUTH.md (internal ledger), project log, thesis figures
 archive/exploratory/ One-off diagnostics and non-reported experiments (kept for history)
 ```
@@ -72,14 +72,18 @@ make help             # list every target
 
 These run the real scripts and **require the dataset and trained weights locally** (not in git — see below). The exact command and expected number for every result are listed in [`REPRODUCE.md`](REPRODUCE.md).
 
-## Try it without the full dataset (demo)
+## Try it — interactive demo
 
-The images (client IP) and 2 GB of weights are **not** in the repository. A small **demo bundle** (a few sample NIR packs + the deployed weights) is published under [Releases](../../releases):
+An interactive **Streamlit** app runs the whole pipeline on CPU (**ONNX Runtime, no PyTorch**): pick a sample pack or upload your own NIR image, move the decision-threshold slider live, and watch the seal → unrolled strip → defect verdict with a per-stage latency breakdown. Switch seal/defect models on the fly to see the resolution and capacity ablations in action.
 
 ```bash
-# download the demo assets from the latest Release into demo/, then:
-python demo/demo.py demo/samples/*.png     # seal → unroll → defect → verdict
+pip install -r demo/requirements.txt
+# download the demo bundle (ONNX models + sample packs) from the latest Release
+# into demo/models/ and demo/samples/, then:
+cd demo && streamlit run app.py    # opens http://localhost:8501
 ```
+
+The images (client IP) and model weights are **not** in git; the demo assets (5 ONNX models + sample packs) are published under [Releases](../../releases). The demo is self-contained — it does not require the training stack.
 
 ## Deployment
 
