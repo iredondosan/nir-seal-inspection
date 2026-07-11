@@ -991,7 +991,7 @@ nb = {"cells": cells,
                    "language_info": {"name": "python"}},
       "nbformat": 4, "nbformat_minor": 5}
 
-out = "/private/tmp/claude-501/-Volumes-T7-fti-seal/2e252a62-b456-4887-908e-94c7b34abff3/scratchpad/seal_inspection_walkthrough.ipynb"
+out = "seal_inspection_walkthrough.ipynb"
 with open(out, "w") as f:
     json.dump(nb, f, indent=1)
 print("wrote", out, "with", len(cells), "cells")
