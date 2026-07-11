@@ -34,18 +34,22 @@ Full table-by-table traceability in [`REPRODUCE.md`](REPRODUCE.md).
 ## Repository layout
 
 ```
-seal_inspection/     Deployment library: pipeline primitives (core, pipeline, unroll, cvat)
-  reference/         Didactic, simplified trainers (fixed epochs, no early stopping)
-training/            Real trainers that produce the deployed weights
-experiments/         Ablations + cross-validation (one script per thesis result)
-evaluation/          Evaluation / verification tools (Dice, boundary, thresholds, e2e)
-data_prep/           Dataset construction + CVAT-assisted annotation
-figures/             Scripts that regenerate the thesis figures
-deploy/              ONNX export, INT8 quantization, CPU benchmarks, e2e demo
-rust_infer/          Rust ONNX inference app (edge deployment)
+seal_inspection/     Deployment library — pipeline primitives
+  core.py            normalize, pack_bbox, mask_to_ring, unroll_maps
+  pipeline.py        end-to-end two-stage inference
+  tiny_unet.py       compact grayscale defect U-Net
+  cvat.py            CVAT polygon <-> mask helpers
+  reference/         didactic, simplified trainers (fixed epochs, no early stopping)
+training/            train_seal.py · train_defect.py · train_tiny.py
+experiments/         lopo_seal.py · kfold_cv.py · ablation_*.py · baseline_patchcore.py
+evaluation/          eval_seal.py · eval_boundary.py · eval_thresholds.py · eval_e2e.py
+data_prep/           make_{masks,strips,holdout}.py · predict_to_cvat*.py
+deploy/              quantize_int8.py · bench_cpu.py · export_demo_onnx.py · pipeline_e2e.py
+figures/             thesis-figure scripts (need the private data)
 demo/                Interactive Streamlit demo (ONNX, CPU; assets via Releases)
-docs/                SOURCE_OF_TRUTH.md  (result-to-code traceability ledger)
-archive/exploratory/ One-off diagnostics and non-reported experiments (kept for history)
+rust_infer/          Rust ONNX inference app (edge deployment)
+docs/                SOURCE_OF_TRUTH.md (result-to-code traceability ledger)
+archive/exploratory/ one-off diagnostics / non-reported experiments (kept for history)
 ```
 
 ## Installation
