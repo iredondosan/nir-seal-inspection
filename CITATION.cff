@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this software or its results, please cite the Master's thesis below."
+title: "NIR Seal Inspection"
+abstract: >-
+  Two-stage deep-learning inspection of the heat-sealed flange of food trays from
+  NIR line-scan images, optimized for CPU / edge (Rust) deployment.
+type: software
+authors:
+  - family-names: Redondo
+    given-names: Ignacio
+license: MIT
+repository-code: "https://github.com/iredondosan/nir-seal-inspection"
+keywords:
+  - computer-vision
+  - semantic-segmentation
+  - u-net
+  - near-infrared
+  - quality-inspection
+  - onnx
+preferred-citation:
+  type: thesis
+  title: "Inspección automática de sellado alimentario con visión NIR y aprendizaje profundo"
+  authors:
+    - family-names: Redondo
+      given-names: Ignacio
+  institution:
+    name: "Universidad Europea de Valencia"
+  thesis-type: "Trabajo Fin de Máster (Máster de Formación Permanente en Inteligencia Artificial)"
+  year: 2026

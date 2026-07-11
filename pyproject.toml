@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seal-inspection"
+version = "1.0.0"
+description = "NIR line-scan seal inspection of food trays — two-stage U-Net, CPU/edge deployment"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Ignacio Redondo" }]
+keywords = ["computer-vision", "segmentation", "unet", "nir", "quality-inspection", "onnx"]
+
+dependencies = [
+    "torch>=2.1",
+    "torchvision>=0.16",
+    "segmentation-models-pytorch>=0.3",
+    "timm>=0.9",
+    "albumentations>=1.4",
+    "opencv-python-headless>=4.8",
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "onnx>=1.15",
+    "onnxruntime>=1.16",
+    "matplotlib>=3.7",
+    "pillow>=10",
+    "tqdm>=4.65",
+    "pandas>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.urls]
+Repository = "https://github.com/iredondosan/nir-seal-inspection"
+
+# Only the inference library is an importable package; training/experiments/evaluation/
+# deploy are run as scripts (they import seal_inspection).
+[tool.setuptools.packages.find]
+include = ["seal_inspection*"]

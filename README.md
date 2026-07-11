@@ -1,30 +1,106 @@
-# nir-seal-inspection
+# NIR Seal Inspection
 
-NIR line-scan seal inspection of food trays — deep-learning segmentation of the heat-sealed flange (and defect detection) optimized for CPU / Rust edge deployment.
+**Deep-learning inspection of the heat-sealed flange of food trays, from NIR line-scan images — optimized for CPU / edge (Rust) deployment without a GPU.**
 
-A NIR line-scan camera images trays crossing a gap between two conveyors. The goal is to inspect the heat-sealed flange (the "seal") of each tray for defects. Because the camera is **free-running** (no encoder trigger), packs appear with non-rigid wavy distortion, so the pipeline **follows the real seal edges** rather than trying to globally rectify the image.
+A NIR line-scan camera images trays crossing the gap between two conveyors. The goal is to inspect the heat-sealed flange (the *seal*) of each tray for contamination and sealing defects. Because the camera is **free-running** (no encoder trigger), packs appear with non-rigid wavy distortion, so the pipeline **follows the real seal edges** instead of globally rectifying the image.
 
-## Pipeline
-1. Remove black side bands and detect the pack (per-column conveyor reference, background subtraction).
-2. Segment the **seal ring** (outer flange edge − inner well edge) with a lightweight U-Net.
-3. Unwrap the seal into a flattened strip for inspection.
-4. (In progress) classify / segment **defects** on the strip.
+![Pipeline](docs/thesis_figures/fig_pipeline_endtoend.png)
 
-## Model
-- U-Net with a **MobileNetV3-small** encoder, pack-cropped 384×384 input (~3.6M params).
-- Trained across multiple products via an active-learning loop: auto-generate CVAT pre-annotations → human-correct a small set → fine-tune.
-- Deployment artifact: **INT8 ONNX (~4.2 MB)** run via Rust `ort` on low-power x86 (no GPU).
+This repository accompanies a Master's thesis (TFM). It contains the full source used to **train, evaluate and deploy** the system, and — crucially — a table that maps **every number and figure in the thesis to the exact script that produced it** (see [`REPRODUCE.md`](REPRODUCE.md)).
 
-## Evaluation
-Region overlap (Dice) hides thin-ring edge errors, so evaluation also reports **Boundary-IoU, HD95, ASSD**. An inference-time **quality score** (geometry + probability-map confidence, no ground truth needed) flags low-confidence predictions for review.
+---
+
+## Two-stage pipeline
+
+1. **Pre-process** — remove the black side bands, detect the tray (per-column conveyor reference + background subtraction), percentile contrast stretch.
+2. **Stage 1 · Seal segmentation** — a lightweight **U-Net (MobileNetV3-small, 3.59 M)** segments the seal *ring* (outer flange edge − inner well edge) at 1280 px.
+3. **Unroll** — the ring is flattened into a **128×1536 strip** by marching perpendicular to the outer contour (correspondence-free).
+4. **Stage 2 · Defect segmentation** — a **U-Net (ResNet18, 14.33 M)** segments defects on the strip; the pack score is `max(GaussianBlur(sigmoid, σ=2))`.
+5. **Verdict** — DEFECT if score ≥ threshold, else GOOD.
+
+## Headline results
+
+| Metric | Value | Backed by |
+|---|---|---|
+| Seal Dice (validation) | **0.967** | `evaluation/eval_seal.py` |
+| Seal Dice, zero-shot across products (LOPO) | **0.955 ± 0.010** | `experiments/lopo_seal.py` |
+| Defect AUROC (isolated GT strip) | **0.978** | `evaluation/eval_e2e.py` |
+| End-to-end AUROC (deployed) | **0.968** | `evaluation/eval_e2e.py` |
+| End-to-end AUROC (5-fold CV) | **0.975 ± 0.008** | `experiments/kfold_cv.py` |
+| Operating point @0.5 | recall **21/23**, FP **8/156 (5.1 %)** | `evaluation/eval_thresholds.py` |
+| PatchCore baseline (unsupervised) | AUROC 0.800 | `experiments/baseline_patchcore.py` |
+| Deployed seal latency (CPU) | **68 ms** torch / **42 ms** ONNX / **19 ms** INT8 (@384, i7-12700K, 4 threads) | `deploy/bench_cpu.py` |
+
+Full table-by-table traceability in [`REPRODUCE.md`](REPRODUCE.md).
 
 ## Repository layout
-- `src/` — training, prediction, evaluation, quality-scoring, pre-annotation, unrolling, quantization, and Rust-inference helper scripts.
-- `docs/` — project log (`TFM_seal_inspection_LOG.md`) and `thesis_figures/`.
-- `notebooks/` — exploratory notebooks.
-- `rust_infer/` — Rust ONNX inference app.
 
-**Not tracked in git** (large / IP — kept on the workstation): `data/` (images + annotation XMLs), `models/` (`*.pt` / `*.onnx` weights), `outputs/`, `.venv/`.
+```
+seal_inspection/     Deployment library: pipeline primitives (core, pipeline, unroll, cvat)
+  reference/         Didactic, simplified trainers (fixed epochs, no early stopping)
+training/            Real trainers that produce the deployed weights
+experiments/         Ablations + cross-validation (one script per thesis result)
+evaluation/          Evaluation / verification tools (Dice, boundary, thresholds, e2e)
+data_prep/           Dataset construction + CVAT-assisted annotation
+figures/             Scripts that regenerate the thesis figures
+deploy/              ONNX export, INT8 quantization, CPU benchmarks, e2e demo
+rust_infer/          Rust ONNX inference app (edge deployment)
+demo/                Runnable demo on a few sample packs (weights via Releases)
+docs/                SOURCE_OF_TRUTH.md (internal ledger), project log, thesis figures
+archive/exploratory/ One-off diagnostics and non-reported experiments (kept for history)
+```
 
-## Context
-Master's thesis (TFM) project. Seal defects are ultimately about hermetic seal integrity; the visual labels are a documented proxy.
+## Installation
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e .            # installs the seal_inspection package + pinned deps
+# or: pip install -r requirements.txt
+```
+
+## Reproducing the results
+
+Each thesis table/figure has a named script and a `make` target:
+
+```bash
+make table-4.1        # per-product seal Dice
+make table-4.4        # defect threshold sweep (operating point)
+make table-4.7        # augmentation ablation
+make deploy-onnx      # export + INT8 quantize + CPU benchmark
+make help             # list every target
+```
+
+These run the real scripts and **require the dataset and trained weights locally** (not in git — see below). The exact command and expected number for every result are listed in [`REPRODUCE.md`](REPRODUCE.md).
+
+## Try it without the full dataset (demo)
+
+The images (client IP) and 2 GB of weights are **not** in the repository. A small **demo bundle** (a few sample NIR packs + the deployed weights) is published under [Releases](../../releases):
+
+```bash
+# download the demo assets from the latest Release into demo/, then:
+python demo/demo.py demo/samples/*.png     # seal → unroll → defect → verdict
+```
+
+## Deployment
+
+The seal stage is exported to **INT8 ONNX (~4.2 MB)** and runs via the Rust `ort` app in `rust_infer/` on low-power x86 (no GPU), ~19 ms/pack single-thread. Region overlap (Dice) hides thin-ring edge errors, so evaluation also reports **Boundary-IoU, HD95, ASSD**, and an inference-time **quality score** (`deploy/quality_score.py`, no ground truth needed) flags low-confidence predictions for review.
+
+## Data availability
+
+The NIR images and annotations are proprietary and are **not** released. The code is fully public and every result is traceable to its script; the demo bundle provides a runnable subset. Contact the author for research access to additional data.
+
+## Citation
+
+```bibtex
+@mastersthesis{redondo2026sealinspection,
+  author = {Ignacio Redondo},
+  title  = {Inspección automática de sellado alimentario con visión NIR y aprendizaje profundo},
+  school = {Universidad Europea de Valencia},
+  note   = {Máster de Formación Permanente en Inteligencia Artificial},
+  year   = {2026}
+}
+```
+
+## License
+
+Code released under the [MIT License](LICENSE). Proprietary data is excluded.
