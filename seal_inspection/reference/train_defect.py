@@ -153,7 +153,7 @@ def evaluate(model, test_items, device):
 
 def main():
     ap = argparse.ArgumentParser(description="Train the defect segmentation model.")
-    ap.add_argument("--root", default="/home/ubuntu/TFM/seal-inspection")
+    ap.add_argument("--root", default=".")
     ap.add_argument("--encoder", default="resnet18")
     a = ap.parse_args()
     random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)

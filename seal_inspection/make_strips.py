@@ -100,7 +100,7 @@ def split_per_product(packs):
 
 def main():
     ap = argparse.ArgumentParser(description="Build the defect (strip, mask) dataset.")
-    ap.add_argument("--root", default="/home/ubuntu/TFM/seal-inspection")
+    ap.add_argument("--root", default=".")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
     out = a.out or os.path.join(a.root, "data/strips")

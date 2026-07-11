@@ -14,6 +14,6 @@ DATA: Path = REPO_ROOT / "data"
 OUTPUTS: Path = REPO_ROOT / "outputs"
 DOCS: Path = REPO_ROOT / "docs"
 
-# String alias kept for the legacy `R = "/home/ubuntu/TFM/seal-inspection"` usage
+# String alias kept for the legacy `R = "<repo root>"` usage
 # (scripts build paths as f"{R}/models/..." or R + "/...").
 ROOT: str = str(REPO_ROOT)

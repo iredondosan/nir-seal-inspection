@@ -168,7 +168,7 @@ def dice_loss(logits, target, eps=1.):
 
 def main():
     ap = argparse.ArgumentParser(description="Train the seal segmentation model.")
-    ap.add_argument("--root", default="/home/ubuntu/TFM/seal-inspection")
+    ap.add_argument("--root", default=".")
     ap.add_argument("--base", default=None, help="checkpoint to fine-tune from (optional)")
     ap.add_argument("--encoder", default="timm-mobilenetv3_small_100")
     ap.add_argument("--img", type=int, default=1280)
