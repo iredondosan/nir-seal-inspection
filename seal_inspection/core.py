@@ -253,6 +253,7 @@ def visvalingam(points: np.ndarray, target: int) -> np.ndarray:
     P = [tuple(p) for p in points]
 
     def tri_area(a, b, c):
+        """Triangle area = the Visvalingam importance of vertex b."""
         return abs((b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])) / 2.0
 
     while len(P) > target:
@@ -280,6 +281,7 @@ def _smooth_closed(a: np.ndarray, k: int = 15) -> np.ndarray:
 
 
 def _is_ccw(poly: np.ndarray) -> bool:
+    """True if the polygon is wound counter-clockwise (signed contour area > 0)."""
     return cv2.contourArea(poly.astype(np.float32), oriented=True) > 0
 
 
