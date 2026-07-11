@@ -10,7 +10,7 @@ veredicto final CORRECTO/DEFECTO. **Corre en CPU** (ONNX Runtime, sin GPU ni PyT
 Descarga los modelos del Release en `models/`:
 
 ```bash
-gh release download v1.0.0 -R iredondosan/nir-seal-inspection -D models
+for f in seal.onnx seal_512.onnx seal_384.onnx defect.onnx defect_tiny.onnx; do curl -sL -o models/$f https://github.com/iredondosan/nir-seal-inspection/releases/download/v1.0.0/$f; done
 ```
 
 Prepara el entorno y ejecuta (CPU, ONNX Runtime, sin PyTorch):

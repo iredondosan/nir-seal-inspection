@@ -79,7 +79,7 @@ An interactive **Streamlit** app runs the whole pipeline on CPU (**ONNX Runtime,
 
 ```bash
 pip install -r demo/requirements.txt
-gh release download v1.0.0 -R iredondosan/nir-seal-inspection -D demo/models
+for f in seal.onnx seal_512.onnx seal_384.onnx defect.onnx defect_tiny.onnx; do curl -sL -o demo/models/$f https://github.com/iredondosan/nir-seal-inspection/releases/download/v1.0.0/$f; done
 cd demo
 streamlit run app.py
 ```
