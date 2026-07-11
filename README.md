@@ -49,7 +49,6 @@ figures/             thesis-figure scripts (need the private data)
 demo/                Interactive Streamlit demo (ONNX, CPU; assets via Releases)
 rust_infer/          Rust ONNX inference app (edge deployment)
 docs/                SOURCE_OF_TRUTH.md (result-to-code traceability ledger)
-archive/exploratory/ one-off diagnostics / non-reported experiments (kept for history)
 ```
 
 ## Installation
