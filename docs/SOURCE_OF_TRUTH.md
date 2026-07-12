@@ -46,7 +46,7 @@ Funciones clave (`core.py`):
 | `src/train_tiny.py` | `tiny_defect.pt` (TinyUNet) | TinyUNet 1-canal (0.93 M), 4 niveles [16,32,64,128], **desde cero**, early stopping (paciencia 30). |
 | `src/kfold_cv.py` | `defect_kf0..kf4.pt` | Validación cruzada de **5 pliegues** del defecto → **AUROC 0.977 ± 0.004** (re-run 07-12; ≈0.97, ver nota abajo). |
 | `src/lopo_cv.py` | (eval) | Sellado: **leave-one-product-out** (Dice zero-shot 0.955±0.013). prod6: **leave-one-pack-out** (9/9 capturas, 3/3 packs). |
-| `src/anomaly_patchcore.py` | (línea base) | PatchCore sobre tiras correctas → **AUROC 0.800**. |
+| `src/anomaly_patchcore.py` | (línea base) | PatchCore (ResNet18) sobre tiras correctas, **coreset greedy k-center** → **AUROC 0.776** (banco completo 0.784; random 0.694). `experiments/baseline_patchcore.py`, `results/baseline_patchcore.json`. |
 | `src/train_resnet34.py` | `defect` base pesado | Línea base de mayor capacidad para §4.10 (24.4 M). |
 | `src/quantize_int8.py` | ONNX INT8 | Cuantización INT8 del sellado (384², ~4.2 MB, ~20 ms/4hilos). |
 
@@ -83,7 +83,7 @@ Hold-out global vigente: **179 packs = 156 correctos / 23 defectuosos** (`data/h
 | Extremo a extremo — AUROC (desplegado) | **0.968** | seal + `defect_strip.pt` |
 | Extremo a extremo — AUROC (5-fold CV) | **0.977 ± 0.004** (re-run 07-12; ≈0.97) | `defect_kf0..4` |
 | Punto de operación @0.50 | **recall 21/23**, FP **8/156 = 5.1 %** | 2 FN: `seal_1313` (prod3), `seal_2381` (prod2), ambos score ≈ 0.000 |
-| PatchCore (línea base anomalía) | AUROC 0.800 | `anomaly_patchcore.py` |
+| PatchCore (línea base anomalía) | AUROC **0.776** (greedy coreset; full 0.784) | `experiments/baseline_patchcore.py` |
 | TinyUNet | AUROC 0.972 · 0.93 M (15.5× menos) | `tiny_defect.pt` |
 | prod6 — LOPO por pack | 9/9 capturas, 3/3 packs (≥0.989) | `lopo_cv.py` |
 

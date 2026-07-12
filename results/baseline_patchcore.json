@@ -1,9 +1,27 @@
 {
-  "auroc": 0.7037346711259754,
-  "best_f1": 0.36956521700827033,
-  "precision": 0.2463768115906322,
-  "recall": 0.7391304347504726,
-  "threshold": 0.5460731387138367,
+  "full": {
+    "auroc": 0.784,
+    "n_bank": 2279424,
+    "best_f1": 0.423,
+    "precision": 0.312,
+    "recall": 0.652
+  },
+  "greedy": {
+    "auroc": 0.7756,
+    "n_bank": 40000,
+    "best_f1": 0.427,
+    "precision": 0.308,
+    "recall": 0.696
+  },
+  "random": {
+    "auroc": 0.6937,
+    "n_bank": 40000,
+    "best_f1": 0.364,
+    "precision": 0.246,
+    "recall": 0.696
+  },
+  "auroc": 0.7756,
   "n_def": 23,
-  "n_good": 156
+  "n_good": 156,
+  "note": "Greedy k-center coreset (FPS) is the faithful PatchCore; 'full' = no coreset (upper bound); 'random' = old speed hack. resnet18 layer2+3, MEM_SIZE=40000, SEED=42."
 }
