@@ -21,13 +21,13 @@ This repository accompanies a Master's thesis (TFM). It contains the full source
 | Metric | Value | Backed by |
 |---|---|---|
 | Seal Dice (validation) | **0.967** | `evaluation/eval_seal.py` |
-| Seal Dice, zero-shot across products (LOPO) | **0.955 ± 0.010** | `experiments/lopo_seal.py` |
+| Seal Dice, zero-shot across products (LOPO) | **0.955 ± 0.013** | `experiments/lopo_seal.py` |
 | Defect AUROC (isolated GT strip) | **0.978** | `evaluation/eval_e2e.py` |
 | End-to-end AUROC (deployed) | **0.968** | `evaluation/eval_e2e.py` |
-| End-to-end AUROC (5-fold CV) | **0.975 ± 0.008** | `experiments/kfold_cv.py` |
+| End-to-end AUROC (5-fold CV) | **0.977 ± 0.004** | `experiments/kfold_cv.py` |
 | Operating point @0.5 | recall **21/23**, FP **8/156 (5.1 %)** | `evaluation/eval_thresholds.py` |
-| PatchCore baseline (unsupervised) | AUROC 0.800 | `experiments/baseline_patchcore.py` |
-| Deployed seal latency (CPU) | **68 ms** torch / **42 ms** ONNX / **19 ms** INT8 (@384, i7-12700K, 4 threads) | `deploy/bench_cpu.py` |
+| PatchCore baseline (unsupervised, greedy coreset) | AUROC **0.776** | `experiments/baseline_patchcore.py` |
+| Deployed latency (CPU, ONNX) | seal **342 ms** @1280 / **26 ms** @384; full pipeline **~630 ms → ~100 packs/min**; INT8 not deployable | `demo/bench_latency.py` |
 
 Full table-by-table traceability in [`REPRODUCE.md`](REPRODUCE.md).
 

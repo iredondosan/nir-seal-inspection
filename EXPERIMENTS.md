@@ -120,8 +120,22 @@ requieren los datos (`data/`) y los pesos (`models/`) locales.
   seguridad estilo PatchCore) sobre la tira desenrollada.
 - **Protocolo:** un codificador ImageNet congelado convierte cada tira en una rejilla de descriptores;
   se modela la normalidad con tiras correctas y se puntúa por distancia.
-- **Resultado:** AUROC **0,800** — no supera al supervisado; se reporta honestamente como línea base /
-  intento de mejora, no como punto de partida.
+- **Coreset:** k-center **greedy** (‘farthest-point sampling’), fiel a PatchCore (no aleatorio).
+- **Resultado:** AUROC **0,776** (greedy; banco completo 0,784; el subconjunto aleatorio previo daba 0,694) —
+  no supera al supervisado (0,978); línea base honesta, no punto de partida. El 0,800 previo salía de una
+  configuración no reproducible (sin greedy / otro backbone).
+
+## Cuantización INT8, comparación de sistemas y latencia
+
+**Scripts:** `evaluation/eval_int8_quality.py` · `evaluation/eval_systems_e2e.py` · `demo/bench_latency.py` · `deploy/quantize_int8.py`
+
+- **INT8 (estático):** reduce el sellado a 4,2 MB pero **no es desplegable** — fragmenta el anillo fino y la
+  localización falla (61/179 @384, 0/179 @1280; `results/int8_quality.json`). La opción rápida real es **FP32 @384**.
+- **Comparación de sistemas (Tabla 4.9):** 6 configuraciones (sellado 1280/512/384 × ResNet18/TinyUNet) sobre el
+  conjunto común → AUROC E2E 0,968–0,982, equivalentes (±0,01); el desplegado reproduce tab:umbral (0,968·21/23).
+  `results/systems_e2e.json`.
+- **Latencia (ONNX, i7-12700K):** sellado 342 ms@1280 / 26 ms@384; defecto 65/40 ms; pipeline E2E ~630 ms →
+  ~100 piezas/min. `results/latency.json`.
 
 ---
 
