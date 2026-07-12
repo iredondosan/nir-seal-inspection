@@ -1,0 +1,64 @@
+{
+  "note": "Seal via ONNX at its own resolution; defect head FP32 (torch). Dice/boundary on the reviewed val set (same as tab:dice-producto); E2E AUROC on the leakage-free hold-out. int8_384 vs fp32_384 = quantization cost; vs fp32_1280 = deployed baseline. Static QDQ INT8 (deploy/quantize_int8.py).",
+  "seal_dice_boundary": {
+    "fp32_1280": {
+      "res": 1280,
+      "dice": 0.9634,
+      "biou": 0.721,
+      "hd95": 2.33,
+      "assd": 0.97,
+      "n": 12
+    },
+    "fp32_384": {
+      "res": 384,
+      "dice": 0.936,
+      "biou": 0.88,
+      "hd95": 1.25,
+      "assd": 0.52,
+      "n": 12
+    },
+    "int8_384": {
+      "res": 384,
+      "dice": 0.8206,
+      "biou": 0.698,
+      "hd95": 5.81,
+      "assd": 1.44,
+      "n": 12
+    },
+    "int8_1280": {
+      "res": 1280,
+      "dice": 0.7908,
+      "biou": 0.395,
+      "hd95": 19.07,
+      "assd": 4.84,
+      "n": 12
+    }
+  },
+  "e2e_auroc": {
+    "fp32_1280": {
+      "auroc": 0.977,
+      "n_localised": 178,
+      "recall": "20/23",
+      "fp": "6/155"
+    },
+    "fp32_384": {
+      "auroc": 0.977,
+      "n_localised": 177,
+      "recall": "21/23",
+      "fp": "4/154"
+    },
+    "int8_384": {
+      "auroc": 0.957,
+      "n_localised": 61,
+      "recall": "5/5",
+      "fp": "8/56"
+    },
+    "int8_1280": {
+      "auroc": NaN,
+      "n_localised": 0,
+      "recall": "0/0",
+      "fp": "0/0"
+    }
+  },
+  "bdpx": 5.0
+}
