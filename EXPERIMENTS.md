@@ -77,7 +77,7 @@ requieren los datos (`data/`) y los pesos (`models/`) locales.
     falla su cierre en **26 de 179** piezas (frente a 0 con ImageNet).
   - Defecto (tira de referencia): AUROC **0,978 vs 0,972** — casi insensible a la inicialización *en
     exactitud*; sí converge más rápido (parada temprana ép. **69** vs **141**).
-  - **Extremo a extremo: 0,968 vs 0,895.** El beneficio del preentrenamiento es **selectivo y
+  - **Extremo a extremo: 0,968 vs 0,891.** El beneficio del preentrenamiento es **selectivo y
     acoplado**: ayuda a la etapa con datos escasos (sellado) y ese beneficio **se propaga** al
     sistema completo, porque la calidad del sellado condiciona la del defecto.
 
@@ -89,11 +89,14 @@ requieren los datos (`data/`) y los pesos (`models/`) locales.
   circular horizontal) y **sealjit** (jitter vertical que emula el sellado *predicho* imperfecto).
 - **Protocolo:** se evalúan las cuatro variantes (base / +roll / +sealjit / +ambas) sobre la tira de
   referencia (GT) **y** de extremo a extremo, sobre el hold-out de 23 defectos.
-- **Resultado:** **sealjit es la mejor en todo** (AUROC 0,984 GT / **0,982 e2e**, 23/23 detectadas,
-  **3,2 %** de falsas alarmas) y es la variante desplegada. *roll*, competitivo aislado (0,980),
-  **empeora** de extremo a extremo (0,967) y dispara las falsas alarmas: la aumentación debe
-  validarse de extremo a extremo, no en la etapa aislada.
-- **Matiz:** el modelo `sealjit` de esta ablación da 0,982 e2e; el modelo desplegado (reentreno
+- **Resultado (origen del desenrollado anclado, 2026-07-12):** la aumentación es **determinante**
+  (base 0,953 e2e, 20/23 → cualquier variante 0,975–0,983, equivalentes ±0,01). **sealjit** es la
+  variante desplegada: mejor AUROC en la tira aislada (0,984) y el **mejor punto de operación**
+  (23/23 detectadas, **3,8 %** de falsas alarmas), motivada mecánicamente (emula el sellado *predicho*).
+  *roll* logra el AUROC e2e más alto (0,983) pero con menor recall (21/23). El orden aislado ≠ e2e:
+  la aumentación debe validarse de extremo a extremo (antes del anclaje, la costura arbitraria
+  penalizaba falsamente a *roll*).
+- **Matiz:** el modelo `sealjit` de esta ablación da 0,975 e2e; el modelo desplegado (reentreno
   posterior) da **0,968**, dentro de la variabilidad ±0,008.
 
 ## Ablación de resolución — 384 / 512 / 1280 px (Tabla 4.2)

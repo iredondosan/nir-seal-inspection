@@ -65,7 +65,7 @@ Eval: `src/eval_e2e.py`, `src/eval_thresholds.py` (umbral/OP), `src/eval_boundar
 
 **Ablación transferencia (§4.7):** `scratch_seal_1280.pt` (Dice **0.949**), `defect_scratch_es.pt` (`stop_epoch = 141`). → El "**69 vs 141 épocas**" son las **paradas tempranas del modelo de DEFECTO** (ImageNet vs desde cero), no del sellado.
 
-**E2E de la ablación (verificado 2026-07-10, hold-out actual 156/23):** ImageNet **AUROC 0.968** (recall 21/23, FP 8/156, sellado falla en **0** piezas) vs desde cero **AUROC 0.895** (recall 20/23, FP 11/156, **sellado falla en 26 piezas**). El sistema completo **NO es igual**: el sellado desde cero (Dice 0.949) fragmenta el anillo y falla el cierre en 26 piezas -> puntúan 0 -> hunde el AUROC e2e. La cabeza de defecto sí es init-agnostic en tira de referencia (0.978 vs 0.972), pero el beneficio del sellado **se propaga** al e2e.
+**E2E de la ablación (origen anclado, verificado 2026-07-12, hold-out actual 156/23):** ImageNet **AUROC 0.968** (recall 21/23, FP 8/156, sellado falla en **0** piezas) vs desde cero **AUROC 0.891** (recall 20/23, FP 16/156, **sellado falla en 26 piezas**). El sistema completo **NO es igual**: el sellado desde cero (Dice 0.949) fragmenta el anillo y falla el cierre en 26 piezas -> puntúan 0 -> hunde el AUROC e2e. La cabeza de defecto sí es init-agnostic en tira de referencia (0.978 vs 0.972), pero el beneficio del sellado **se propaga** al e2e.
 
 **5-fold CV (§4.6):** re-ejecutado 2026-07-12 (`experiments/kfold_cv.py` → `results/kfold_cv.json`) → **AUROC 0.977 ± 0.004**. **OJO no-determinismo de GPU:** entre reentrenamientos COMPLETOS la media fluctúa (07-06: 0.965 ± 0.024; 07-12: 0.977 ± 0.004; memoria: 0.977 ± 0.004) — el ±std mide la dispersión ENTRE PLIEGUES de una sola corrida, no entre corridas. Dominado por 1-2 defectos fronterizos (p.ej. `seal_1313`); recall por-fold 17-22/23. **Leer como ≈0.97.**
 
@@ -96,11 +96,11 @@ Hold-out global vigente: **179 packs = 156 correctos / 23 defectuosos** (`data/h
 - **tab:sistemas (4.9)** ✅ comparación E2E homogénea (`core.py`, modelos de sellado por resolución, conjunto común 176: 23 def/153 correcto): desplegado 1280+ResNet18 = **0.968 · 21/23** (reproduce tab:umbral); las 6 configs 0.964-0.970, equivalentes (±0.01, unroll con origen anclado resolución-independiente → quita el artefacto de costura). `evaluation/eval_systems_e2e.py`, `results/systems_e2e.json`.
 - **tab:resolucion (4.2)** ✅ 3 resoluciones (`experiments/eval_resolution.py` → `results/ablation_resolution.json`): prod2 Dice 0.920/0.941/0.954, B-IoU 0.496/0.597/0.674, HD95 5.00/3.58/3.00, ASSD 1.97/1.49/1.15. (Memoria actualizada; antes 512 estaba desfasada.)
 - **tab:pretrain tira-ref (4.5)** ✅ GT-strip AUROC ImageNet **0.978** / scratch **0.972** (`experiments/eval_pretrain_gt.py` → `results/ablation_transfer_e2e.json` campo `gt_strip_auroc`).
-- **tab:pretrain (4.5)** ✅ corregido: 0.967/0.949 · 0.978/0.972 · **e2e 0.968/0.895** · anillo cerrado 179/153 · FP 5.1%/7.1% · ES 69/141.
+- **tab:pretrain (4.5)** ✅ corregido: 0.967/0.949 · 0.978/0.972 · **e2e 0.968/0.891** · anillo cerrado 179/153 · FP 5.1%/10.3% · ES 69/141.
 - **tab:tiny (4.6)** ✅ tira GT resnet18 0.978 / tiny 0.972; e2e 0.968 / 0.969; latencias i7 4hilos ~151/83 ms (memoria 142/90.6, dentro de ruido).
-- **tab:aug (4.7)** ✅ corregido (23 def): baseline 0.975/0.969 · +roll 0.980/0.967 · **+sealjit 0.984/0.982** · +both 0.976/0.966.
+- **tab:aug (4.7)** ✅ corregido (23 def, origen anclado 2026-07-12): baseline 0.975/0.953 · +roll 0.980/0.983 · **+sealjit 0.984/0.975** · +both 0.976/0.976. Nota: tras anclar la costura del desenrollado, *roll* ya no penaliza e2e (era artefacto); *sealjit* sigue siendo el mejor punto de operación (23/23 @ 3.8% FP).
 - **tab:despliegue (4.8)** ✅ **RE-MEDIDO en CPU** (i7-12700K, 4 hilos, sin GPU) 2026-07-10. El 16.6/467/28× del LOG (junio) NO reproduce. Latencias actuales torch: Lite MobileNetV3-small (3.59 M) @384 **68 ms** / @512 130 / @1280 924; ResNet34-UNet (24.44 M) @384 **157 ms** / @512 285 → **~2.3× a igual resolución (384)**, 6.8× menos parámetros. ONNX Lite: @384 26 ms, @1280 **341 ms**, INT8@384 **19 ms**. Defecto resnet18 151 ms, TinyUNet 83 ms (tira 128×1536). Tabla y §4.10 actualizadas a estas cifras medidas.
-- **tab:resumen (nueva, §4.10)** ✅ **agrega resultados existentes** (sin números nuevos): Dice 0.967 · LOPO 0.955±0.013 · AUROC E2E esperado 0.977±0.004 / desplegado 0.968 / mejor 0.982 · latencias ONNX de `results/latency.json` (sellado @1280 342 ms, defecto 65/40 ms, E2E ~630 ms→~100/min, opción rápida FP32@384 ~26 ms mismo AUROC E2E 0,977; INT8 no desplegable, ver `results/int8_quality.json`). Reconcilia esperado/desplegado/mejor E2E en un solo sitio; `tab:aug` reetiquetada `(config. desplegada)` con nota apuntando a `tab:umbral`.
+- **tab:resumen (nueva, §4.10)** ✅ **agrega resultados existentes** (sin números nuevos): Dice 0.967 · LOPO 0.955±0.013 · AUROC E2E esperado 0.977±0.004 / desplegado 0.968 / mejor 0.983 · latencias ONNX de `results/latency.json` (sellado @1280 342 ms, defecto 65/40 ms, E2E ~630 ms→~100/min, opción rápida FP32@384 ~26 ms, AUROC E2E 0,969; INT8 no desplegable, ver `results/int8_quality.json`). Reconcilia esperado/desplegado/mejor E2E en un solo sitio; `tab:aug` reetiquetada `(config. desplegada)` con nota apuntando a `tab:umbral`.
 - **fig:resolucion (4.2)** y **fig:thresholds (4.6)** ✅ coinciden con sus tablas.
 
 **Los 2 falsos negativos son el resultado FINAL** — aparecieron al adoptar el **split de validación + early stopping** (protocolo sin fuga). El §5.4 (análisis de errores) es correcto.
@@ -109,14 +109,14 @@ Hold-out global vigente: **179 packs = 156 correctos / 23 defectuosos** (`data/h
 
 ## 5. Aumentaciones (ablación defecto — `src/train_defect.py --roll/--sealjit`)
 
-| Variante | AUROC tira GT | AUROC E2E | recall | FP | (hold-out 23 defectos, verificado 2026-07-10) |
+| Variante | AUROC tira GT | AUROC E2E | recall | FP | (hold-out 23 defectos, origen anclado, verificado 2026-07-12) |
 |---|:--:|:--:|:--:|:--:|:--|
-| baseline (`defect_strip.noaug`) | 0.975 | 0.969 | 22/23 | 5.8 % | |
-| +roll (`defect_roll`) | 0.980 | 0.967 | 22/23 | 8.3 % | competitivo aislado, sube FP e2e |
-| **+sealjit** (`defect_jit`) | **0.984** | **0.982** | **23/23** | **3.2 %** | mejor en TODO; variante desplegada |
-| +both (`defect_rolljit`) | 0.976 | 0.966 | 23/23 | 9.6 % | |
+| baseline (`defect_strip.noaug`) | 0.975 | 0.953 | 20/23 | 10.3 % | sin aumentación = peor en TODO |
+| +roll (`defect_roll`) | 0.980 | **0.983** | 21/23 | 3.8 % | mejor AUROC e2e, menor recall |
+| **+sealjit** (`defect_jit`) | **0.984** | 0.975 | **23/23** | **3.8 %** | mejor tira aislada + mejor punto de operación; desplegada |
+| +both (`defect_rolljit`) | 0.976 | 0.976 | 22/23 | 5.1 % | |
 
-Lección: **validar la aumentación de extremo a extremo, no en la etapa aislada** (`roll` sube las falsas alarmas e2e). En el hold-out corregido, **sealjit es el mejor en todas las métricas** (0.984 GT / 0.982 e2e / 23-23 / 3.2 % FP). OJO: el `defect_jit` de la ablación da 0.982 e2e; el modelo desplegado `defect_strip.pt` (reentreno posterior) da 0.968 — dentro de ±0.008. *(Cifras del hold-out **pre-corrección** de etiquetas, 26 defectos. **Ya incorporadas a la memoria en §4.9** (Tabla `tab:aug`), etiquetadas explícitamente como "conjunto de desarrollo". Pendiente opcional: reevaluar los 4 modelos (`defect_strip.noaug`/`defect_roll`/`defect_jit`/`defect_rolljit`) sobre el hold-out corregido (23 defectos) para consistencia total — como se hizo con la ablación de transferencia.)*
+Lección: la aumentación de la tira es **determinante** (base 0.953 → cualquier variante 0.975–0.983, equivalentes ±0.01) y debe **validarse de extremo a extremo**, pues el orden aislado (donde `sealjit` domina) no coincide con el e2e. `sealjit` es la variante desplegada por su mejor punto de operación (23/23 @ 3.8 % FP) y su motivación mecánica (emula el sellado predicho). El `defect_jit` de la ablación da 0.975 e2e; el desplegado `defect_strip.pt` (reentreno posterior) da 0.968 — dentro de ±0.008. *(Nota: tras **anclar el origen del desenrollado** (`_anchor_origin` en `core.py`/`demo`, 2026-07-12) la costura ya no es arbitraria; antes penalizaba falsamente a `roll` en e2e. Re-ejecutado sobre el hold-out corregido de 23 defectos con `experiments/ablation_augment.py`.)*
 
 ---
 
@@ -126,7 +126,7 @@ Lección: **validar la aumentación de extremo a extremo, no en la etapa aislada
 |---|---|---|
 | SYSTEM_REPORT §5 (cuerpo) | E2E AUROC 0.935, defecto 0.964, hold-out 154/26, OP 0.43 | Pre-corrección de etiquetas |
 | SYSTEM_REPORT Addendum §D | 100 % recall (23/23), AUROC 0.976 | Estado intermedio (~19:25); **superado** por `defect_strip.pt` de las 22:20 (split de validación) → **21/23, 0.968** |
-| Tesis Tabla 4.5 (fila e2e AUROC) | 0.968 / 0.968 (idéntico) | **ERROR**: el e2e desde cero es **0.895** (el sellado desde cero falla el cierre en 26 piezas), no 0.968. Corregido a **0.968 / 0.895** |
+| Tesis Tabla 4.5 (fila e2e AUROC) | 0.968 / 0.968 (idéntico) | **ERROR**: el e2e desde cero es **0.895** (el sellado desde cero falla el cierre en 26 piezas), no 0.968. Corregido a **0.968 / 0.891** (0.895→0.891 tras anclar el origen del desenrollado, 2026-07-12) |
 | Logs `train_seal_p4/p5` | Dice 0.961/0.963 | Corridas de 40 ép. anteriores; el desplegado (mejor corrida) = **0.967** |
 | §4.7 "parada temprana 69/141" | atribuido al **sellado** | son las épocas ES del **defecto** (ImageNet 69 / scratch 141) |
 
@@ -139,6 +139,6 @@ Lección: **validar la aumentación de extremo a extremo, no en la etapa aislada
 - ✅ INT8 en despliegue → §4.10: seal INT8@384 ≈ **19 ms/4 hilos** (i7-12700K) vs fp32@1280 ≈ 341 ms (~18×), 4,2 MB (3,4× menos). Medido consistente con SYSTEM_REPORT §6.
 
 **Pendiente / posible incorporación futura:**
-- Despliegue en **Rust** (`ort`) — la memoria lo cita como **línea futura** (sin código en el repo; se retiró el stub incompleto). Latencia desplegada real (FP32 ONNX) en `results/latency.json` (`demo/bench_latency.py`); INT8 estático @384 = ~19 ms/4,2 MB PERO **no desplegable**: fragmenta el anillo → falla la localización (E2E localiza 61/179 @384, 0/179 @1280; Dice 0,821/0,791; `results/int8_quality.json`, `evaluation/eval_int8_quality.py`). Opción rápida real: **FP32 @384** (AUROC E2E 0,977 = @1280, Dice 0,936, ~26 ms).
+- Despliegue en **Rust** (`ort`) — la memoria lo cita como **línea futura** (sin código en el repo; se retiró el stub incompleto). Latencia desplegada real (FP32 ONNX) en `results/latency.json` (`demo/bench_latency.py`); INT8 estático @384 = ~19 ms/4,2 MB PERO **no desplegable**: fragmenta el anillo → falla la localización (E2E localiza 61/179 @384, 0/179 @1280; Dice 0,821/0,791; `results/int8_quality.json`, `evaluation/eval_int8_quality.py`). Opción rápida real: **FP32 @384** (AUROC E2E 0,969 ≈ @1280 0,968, Dice 0,936, ~26 ms).
 - `defect_rebal_*` (rebalanceo, oversample defectos pequeños) — experimento no reportado.
 - `eval_tta.py` (test-time augmentation) — no reportado.

@@ -36,22 +36,22 @@
   },
   "e2e_auroc": {
     "fp32_1280": {
-      "auroc": 0.977,
+      "auroc": 0.964,
       "n_localised": 178,
-      "recall": "20/23",
-      "fp": "6/155"
+      "recall": "21/23",
+      "fp": "9/155"
     },
     "fp32_384": {
-      "auroc": 0.977,
+      "auroc": 0.969,
       "n_localised": 177,
       "recall": "21/23",
-      "fp": "4/154"
+      "fp": "7/154"
     },
     "int8_384": {
-      "auroc": 0.957,
+      "auroc": 0.971,
       "n_localised": 61,
       "recall": "5/5",
-      "fp": "8/56"
+      "fp": "6/56"
     },
     "int8_1280": {
       "auroc": NaN,
