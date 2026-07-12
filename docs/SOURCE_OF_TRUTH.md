@@ -44,7 +44,7 @@ Funciones clave (`core.py`):
 | `src/train_reviewed.py` | **`best_lite_reviewed_1280.pt`** (sellado desplegado) | Fine-tune de `best_lite.pt`; **1280²**, AdamW **1e-4**, wd 1e-4, **coseno**, **40 ép.**, batch 2, BCE+Dice, AMP, copy-paste **P=0.8** (contaminación/grafismo sin cambiar máscara), VAL_PER=2/producto, **mejor checkpoint** (sin early stopping). `--scratch` para la ablación. **NOTA (2026-07-11):** la config desplegada (1280 / batch 2 / 40 ép.) se pasa por **flags CLI**; los *defaults* del script son `--img 512 --batch 12 --epochs 60`. Verificable: el checkpoint guarda `img=1280`. |
 | `src/train_defect.py` | **`defect_strip.pt`** (defecto desplegado) | ResNet18 U-Net, ImageNet, tira **128×1536**, AdamW **2e-4**, wd 1e-4, **ReduceLROnPlateau** (factor 0.5, pac. 8), **EARLY STOPPING** (paciencia **25** sobre pérdida de validación, **máx. 200 ép.**), BCE(**pos_weight=20**)+Dice, batch 8, 1200 pasos/ép., **val 15 % a nivel de pieza** (fuera de train y de la biblioteca copy-paste), sobremuestreo 50 %, copy-paste **P=0.7**, **`--sealjit`** (jitter vertical del sellado), `--roll`, `--kfold`. Test evaluado **una vez**. |
 | `src/train_tiny.py` | `tiny_defect.pt` (TinyUNet) | TinyUNet 1-canal (0.93 M), 4 niveles [16,32,64,128], **desde cero**, early stopping (paciencia 30). |
-| `src/kfold_cv.py` | `defect_kf0..kf4.pt` | Validación cruzada de **5 pliegues** del defecto → **AUROC 0.975 ± 0.008**. |
+| `src/kfold_cv.py` | `defect_kf0..kf4.pt` | Validación cruzada de **5 pliegues** del defecto → **AUROC 0.977 ± 0.004** (re-run 07-12; ≈0.97, ver nota abajo). |
 | `src/lopo_cv.py` | (eval) | Sellado: **leave-one-product-out** (Dice zero-shot 0.955±0.013). prod6: **leave-one-pack-out** (9/9 capturas, 3/3 packs). |
 | `src/anomaly_patchcore.py` | (línea base) | PatchCore sobre tiras correctas → **AUROC 0.800**. |
 | `src/train_resnet34.py` | `defect` base pesado | Línea base de mayor capacidad para §4.10 (24.4 M). |
@@ -67,7 +67,7 @@ Eval: `src/eval_e2e.py`, `src/eval_thresholds.py` (umbral/OP), `src/eval_boundar
 
 **E2E de la ablación (verificado 2026-07-10, hold-out actual 156/23):** ImageNet **AUROC 0.968** (recall 21/23, FP 8/156, sellado falla en **0** piezas) vs desde cero **AUROC 0.895** (recall 20/23, FP 11/156, **sellado falla en 26 piezas**). El sistema completo **NO es igual**: el sellado desde cero (Dice 0.949) fragmenta el anillo y falla el cierre en 26 piezas -> puntúan 0 -> hunde el AUROC e2e. La cabeza de defecto sí es init-agnostic en tira de referencia (0.978 vs 0.972), pero el beneficio del sellado **se propaga** al e2e.
 
-**5-fold CV (§4.6):** `defect_kf0..kf4.pt` (07-06), stop_epoch 129/93/107/112/67 → **AUROC 0.975 ± 0.008**.
+**5-fold CV (§4.6):** re-ejecutado 2026-07-12 (`experiments/kfold_cv.py` → `results/kfold_cv.json`) → **AUROC 0.977 ± 0.004**. **OJO no-determinismo de GPU:** entre reentrenamientos COMPLETOS la media fluctúa (07-06: 0.965 ± 0.024; 07-12: 0.977 ± 0.004; memoria: 0.977 ± 0.004) — el ±std mide la dispersión ENTRE PLIEGUES de una sola corrida, no entre corridas. Dominado por 1-2 defectos fronterizos (p.ej. `seal_1313`); recall por-fold 17-22/23. **Leer como ≈0.97.**
 
 ---
 
@@ -81,7 +81,7 @@ Hold-out global vigente: **179 packs = 156 correctos / 23 defectuosos** (`data/h
 | Sellado — Dice zero-shot (LOPO) | 0.955 ± 0.013 | **`experiments/lopo_seal.py`** (no lopo_prod6.py, que es el de prod6) |
 | Defecto aislado — AUROC (tira GT) | **0.978** | `defect_strip.pt` |
 | Extremo a extremo — AUROC (desplegado) | **0.968** | seal + `defect_strip.pt` |
-| Extremo a extremo — AUROC (5-fold CV) | **0.975 ± 0.008** | `defect_kf0..4` |
+| Extremo a extremo — AUROC (5-fold CV) | **0.977 ± 0.004** (re-run 07-12; ≈0.97) | `defect_kf0..4` |
 | Punto de operación @0.50 | **recall 21/23**, FP **8/156 = 5.1 %** | 2 FN: `seal_1313` (prod3), `seal_2381` (prod2), ambos score ≈ 0.000 |
 | PatchCore (línea base anomalía) | AUROC 0.800 | `anomaly_patchcore.py` |
 | TinyUNet | AUROC 0.972 · 0.93 M (15.5× menos) | `tiny_defect.pt` |

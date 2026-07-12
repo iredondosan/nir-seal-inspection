@@ -1,0 +1,53 @@
+{
+  "auroc_mean": 0.9765886287625417,
+  "auroc_std": 0.00432489737820975,
+  "auroc_range": [
+    0.9729654403567447,
+    0.9841137123745819
+  ],
+  "recall_range": [
+    17,
+    22
+  ],
+  "n_def": 23,
+  "seal_1313_caught_folds": 2,
+  "k": 5,
+  "per_fold": [
+    {
+      "fold": 0,
+      "auroc": 0.9735228539576366,
+      "recall": 22,
+      "fp": 9,
+      "seal_1313": 0.4853009879589081
+    },
+    {
+      "fold": 1,
+      "auroc": 0.9841137123745819,
+      "recall": 22,
+      "fp": 5,
+      "seal_1313": 0.1872839331626892
+    },
+    {
+      "fold": 2,
+      "auroc": 0.9788182831661093,
+      "recall": 21,
+      "fp": 5,
+      "seal_1313": 0.6875758171081543
+    },
+    {
+      "fold": 3,
+      "auroc": 0.9735228539576366,
+      "recall": 17,
+      "fp": 5,
+      "seal_1313": 0.5337491035461426
+    },
+    {
+      "fold": 4,
+      "auroc": 0.9729654403567447,
+      "recall": 21,
+      "fp": 8,
+      "seal_1313": 0.0030054899398237467
+    }
+  ],
+  "_note": "Re-run 2026-07-12. GPU training is non-deterministic (SEED fixes data splits, not training). Across full retrainings the mean AUROC ranges ~0.965-0.977 (2026-07-06: 0.965+/-0.024; this run: 0.977+/-0.004). auroc_std is the fold-to-fold spread WITHIN this run, not run-to-run. Thesis reports 0.977+/-0.004; read as ~0.97. Driven by 1-2 borderline defects (e.g. seal_1313)."
+}

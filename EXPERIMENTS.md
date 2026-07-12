@@ -60,8 +60,8 @@ requieren los datos (`data/`) y los pesos (`models/`) locales.
   obligaría a reentrenar el sellado en cada pliegue, consumiendo las escasas máscaras revisadas.
   Por eso se fija el test y solo varía la partición interna del defecto. (La memoria detalla esto
   en la Sección 4.6.)
-- **Resultado:** AUROC **0,975 ± 0,008** (estable). La **sensibilidad** en el punto de operación,
-  en cambio, oscila entre **18 y 22 de 23** según el pliegue: varias piezas defectuosas diminutas
+- **Resultado:** AUROC **0,977 ± 0,004** (estable entre pliegues; JSON `results/kfold_cv.json`, re-run 2026-07-12). Entre reentrenamientos COMPLETOS la media fluctúa levemente (rango 0,965–0,977; el ±std mide la dispersión entre pliegues de UNA corrida, no entre corridas) → leer como **≈0,97**. La **sensibilidad** en el punto de operación,
+  en cambio, oscila entre **17 y 22 de 23** según el pliegue: varias piezas defectuosas diminutas
   caen cerca del umbral. Por eso el AUROC (independiente del umbral) es la métrica principal.
 
 ## Transferencia de aprendizaje — ImageNet vs desde cero (Tabla 4.5)
