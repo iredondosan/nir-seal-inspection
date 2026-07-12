@@ -132,7 +132,7 @@ requieren los datos (`data/`) y los pesos (`models/`) locales.
 - **INT8 (estático):** reduce el sellado a 4,2 MB pero **no es desplegable** — fragmenta el anillo fino y la
   localización falla (61/179 @384, 0/179 @1280; `results/int8_quality.json`). La opción rápida real es **FP32 @384**.
 - **Comparación de sistemas (Tabla 4.9):** 6 configuraciones (sellado 1280/512/384 × ResNet18/TinyUNet) sobre el
-  conjunto común → AUROC E2E 0,968–0,982, equivalentes (±0,01); el desplegado reproduce tab:umbral (0,968·21/23).
+  conjunto común → AUROC E2E 0,964–0,970, equivalentes (±0,01); el desplegado reproduce tab:umbral (0,968·21/23).
   `results/systems_e2e.json`.
 - **Latencia (ONNX, i7-12700K):** sellado 342 ms@1280 / 26 ms@384; defecto 65/40 ms; pipeline E2E ~630 ms →
   ~100 piezas/min. `results/latency.json`.

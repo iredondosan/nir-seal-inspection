@@ -1,19 +1,19 @@
 {
-  "auroc": 0.9690635451505016,
+  "auroc": 0.9659977703455964,
   "n_def": 23,
   "n_good": 156,
-  "min_defect_score": 0.5032657384872437,
+  "min_defect_score": 0.0002123574522556737,
   "operating_points": {
     "0.3": {
-      "recall": 23,
-      "fp": 11
+      "recall": 22,
+      "fp": 13
     },
     "0.5": {
-      "recall": 23,
-      "fp": 10
+      "recall": 22,
+      "fp": 12
     },
     "0.7": {
-      "recall": 20,
+      "recall": 21,
       "fp": 8
     }
   }

@@ -285,6 +285,21 @@ def _is_ccw(poly: np.ndarray) -> bool:
     return cv2.contourArea(poly.astype(np.float32), oriented=True) > 0
 
 
+def _anchor_origin(O):
+    """Rotate/flip a resampled closed contour so the strip origin (column 0) is the
+    top of the ring and the winding is consistent, independent of the mask
+    resolution or where cv2.findContours started the contour."""
+    c = O.mean(0)
+    area = float(np.sum(O[:, 0] * np.roll(O[:, 1], -1) - np.roll(O[:, 0], -1) * O[:, 1]))
+    if area < 0:
+        O = O[::-1].copy()
+    ang = np.arctan2(O[:, 1] - c[1], O[:, 0] - c[0])
+    d = np.angle(np.exp(1j * (ang + np.pi / 2.0)))   # wrapped angular distance to top (-pi/2)
+    i0 = int(np.argmin(np.abs(d)))
+    return np.roll(O, -i0, 0)
+
+
+
 def unroll_maps(outer: np.ndarray, inner: np.ndarray, strip_h: int, strip_w: int):
     """Build the (map_x, map_y) sampling grids that flatten the ring into a strip.
 
@@ -304,6 +319,7 @@ def unroll_maps(outer: np.ndarray, inner: np.ndarray, strip_h: int, strip_w: int
     # correspondence-free (no fragile outer<->inner point pairing), so the strip stays
     # stable for thin defects even when the predicted contour differs slightly from GT.
     O = _resample_closed(outer, strip_w)
+    O = _anchor_origin(O)  # resolution-independent origin/winding
     O[:, 0] = _smooth_closed(O[:, 0]); O[:, 1] = _smooth_closed(O[:, 1])
     T = np.roll(O, -1, 0) - np.roll(O, 1, 0)
     Tn = np.maximum(np.hypot(T[:, 0], T[:, 1]), 1e-6)
@@ -332,6 +348,7 @@ def unroll_maps_legacy(outer: np.ndarray, inner: np.ndarray, strip_h: int, strip
     so the two must stay paired.
     """
     O = _resample_closed(outer, strip_w)
+    O = _anchor_origin(O)  # resolution-independent origin/winding
     I = _resample_closed(inner, strip_w)
     if _is_ccw(O) != _is_ccw(I):                      # wind both the same way
         I = I[::-1]
