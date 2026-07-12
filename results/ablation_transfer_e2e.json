@@ -14,5 +14,9 @@
     "fp": 11,
     "n_good": 156,
     "seal_fail": 26
+  },
+  "gt_strip_auroc": {
+    "imagenet": 0.9777,
+    "scratch": 0.9724
   }
 }
