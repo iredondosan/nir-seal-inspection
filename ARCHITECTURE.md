@@ -126,7 +126,7 @@ variety without capturing more defective packs.
 
 ## 9. Deployment
 
-The deployed pipeline runs FP32 ONNX on CPU (seal @1280 ≈ 342 ms, full pack ≈ 630 ms → ~100 packs/min at 4 threads; `results/latency.json`). The fast option is **FP32 @384 px** — same E2E AUROC 0.977 / 21-of-23 recall as @1280 at ~26 ms (13× faster), trading only contour precision (Dice 0.936 vs 0.963). **Static INT8 is not deployable as-is**: it keeps ~97% pixel agreement but fragments the thin ring, so ring localisation fails on most packs (`results/int8_quality.json`) — a documented negative result. A Rust `ort` benchmark stub in [`rust_infer/`](rust_infer) (source only) times the seal net on edge x86.
+The deployed pipeline runs FP32 ONNX on CPU (seal @1280 ≈ 342 ms, full pack ≈ 630 ms → ~100 packs/min at 4 threads; `results/latency.json`). The fast option is **FP32 @384 px** — same E2E AUROC 0.977 / 21-of-23 recall as @1280 at ~26 ms (13× faster), trading only contour precision (Dice 0.936 vs 0.963). **Static INT8 is not deployable as-is**: it keeps ~97% pixel agreement but fragments the thin ring, so ring localisation fails on most packs (`results/int8_quality.json`) — a documented negative result.
 An inference-time **quality score** (geometry + probability-map confidence, no ground truth
 needed — [`deploy/quality_score.py`](deploy/quality_score.py)) flags low-confidence
 predictions for review. CPU latencies are in `REPRODUCE.md` (Table 4.8).

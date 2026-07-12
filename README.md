@@ -47,7 +47,6 @@ data_prep/           make_{masks,strips,holdout}.py · predict_to_cvat*.py
 deploy/              quantize_int8.py · bench_cpu.py · export_demo_onnx.py · pipeline_e2e.py
 figures/             thesis-figure scripts (need the private data)
 demo/                Interactive Streamlit demo (ONNX, CPU; assets via Releases)
-rust_infer/          Rust `ort` seal-benchmark stub (edge target, source only)
 docs/                SOURCE_OF_TRUTH.md (result-to-code traceability ledger)
 ```
 
@@ -94,7 +93,7 @@ The deployed pipeline runs **FP32 ONNX on CPU** (no GPU). On an i7-12700K (4 thr
 
 For tighter compute budgets, running the **seal at 384 px** keeps the same end-to-end **AUROC (0.977, recall 21/23)** while cutting the seal stage **13×** (342 → 26 ms) and the full pack **~2.8×** (630 → 226 ms, ~264 packs/min), at the cost of some contour precision (Dice 0.936 vs 0.963; `results/int8_quality.json`).
 
-**Static INT8 is not deployable as-is**: despite ~97 % pixel agreement with FP32 it fragments the thin seal ring, so ring localisation fails on most packs (61/179 @384, 0/179 @1280) — a documented negative result (`results/int8_quality.json`). A minimal Rust `ort` benchmark stub in [`rust_infer/`](rust_infer) (source only) times the seal net for low-power edge x86.
+**Static INT8 is not deployable as-is**: despite ~97 % pixel agreement with FP32 it fragments the thin seal ring, so ring localisation fails on most packs (61/179 @384, 0/179 @1280) — a documented negative result (`results/int8_quality.json`).
 
 Because region overlap (Dice) hides thin-ring edge errors, evaluation also reports **Boundary-IoU, HD95 and ASSD**, and an inference-time **quality score** (`deploy/quality_score.py`, no ground truth needed) flags low-confidence predictions for review.
 
