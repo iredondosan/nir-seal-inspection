@@ -50,3 +50,15 @@ for ip in tg:
     Rg.append(sc_res(s)); Tg.append(sc_tiny(s))
 Lg=np.array(Lg)
 print("tira GT: resnet18 AUROC=%.4f  TinyUNet AUROC=%.4f  (%d strips, %d def)"%(auroc(np.array(Rg),Lg),auroc(np.array(Tg),Lg),len(Lg),int(Lg.sum())))
+
+try:
+    from seal_inspection.results import save_results
+    save_results("eval_tables", {
+        "e2e_auroc_resnet": float(auroc(Sr, L)), "e2e_auroc_tiny": float(auroc(Sti, L)),
+        "gt_auroc_resnet": float(auroc(np.array(Rg), Lg)), "gt_auroc_tiny": float(auroc(np.array(Tg), Lg)),
+        "n_def": int(nd), "n_good": int(ng),
+        "threshold_sweep": {str(th): {"tp": int(((Sr >= th) & (L == 1)).sum()),
+                                       "fp": int(((Sr >= th) & (L == 0)).sum())} for th in [0.50,0.70,0.85,0.90,0.95]},
+    })
+except Exception as _e:
+    print('[results] skip:', _e)

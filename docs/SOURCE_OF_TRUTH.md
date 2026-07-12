@@ -45,7 +45,7 @@ Funciones clave (`core.py`):
 | `src/train_defect.py` | **`defect_strip.pt`** (defecto desplegado) | ResNet18 U-Net, ImageNet, tira **128×1536**, AdamW **2e-4**, wd 1e-4, **ReduceLROnPlateau** (factor 0.5, pac. 8), **EARLY STOPPING** (paciencia **25** sobre pérdida de validación, **máx. 200 ép.**), BCE(**pos_weight=20**)+Dice, batch 8, 1200 pasos/ép., **val 15 % a nivel de pieza** (fuera de train y de la biblioteca copy-paste), sobremuestreo 50 %, copy-paste **P=0.7**, **`--sealjit`** (jitter vertical del sellado), `--roll`, `--kfold`. Test evaluado **una vez**. |
 | `src/train_tiny.py` | `tiny_defect.pt` (TinyUNet) | TinyUNet 1-canal (0.93 M), 4 niveles [16,32,64,128], **desde cero**, early stopping (paciencia 30). |
 | `src/kfold_cv.py` | `defect_kf0..kf4.pt` | Validación cruzada de **5 pliegues** del defecto → **AUROC 0.975 ± 0.008**. |
-| `src/lopo_cv.py` | (eval) | Sellado: **leave-one-product-out** (Dice zero-shot 0.955±0.010). prod6: **leave-one-pack-out** (9/9 capturas, 3/3 packs). |
+| `src/lopo_cv.py` | (eval) | Sellado: **leave-one-product-out** (Dice zero-shot 0.955±0.013). prod6: **leave-one-pack-out** (9/9 capturas, 3/3 packs). |
 | `src/anomaly_patchcore.py` | (línea base) | PatchCore sobre tiras correctas → **AUROC 0.800**. |
 | `src/train_resnet34.py` | `defect` base pesado | Línea base de mayor capacidad para §4.10 (24.4 M). |
 | `src/quantize_int8.py` | ONNX INT8 | Cuantización INT8 del sellado (384², ~4.2 MB, ~20 ms/4hilos). |
@@ -78,7 +78,7 @@ Hold-out global vigente: **179 packs = 156 correctos / 23 defectuosos** (`data/h
 | Métrica | Valor | Modelo / script |
 |---|---|---|
 | Sellado — Dice validación | **0.967** | `best_lite_reviewed_1280.pt` |
-| Sellado — Dice zero-shot (LOPO) | 0.955 ± 0.010 | **`_lopo.py`** (no lopo_cv.py, que es el de prod6) |
+| Sellado — Dice zero-shot (LOPO) | 0.955 ± 0.013 | **`experiments/lopo_seal.py`** (no lopo_prod6.py, que es el de prod6) |
 | Defecto aislado — AUROC (tira GT) | **0.978** | `defect_strip.pt` |
 | Extremo a extremo — AUROC (desplegado) | **0.968** | seal + `defect_strip.pt` |
 | Extremo a extremo — AUROC (5-fold CV) | **0.975 ± 0.008** | `defect_kf0..4` |
@@ -91,7 +91,7 @@ Hold-out global vigente: **179 packs = 156 correctos / 23 defectuosos** (`data/h
 
 - **tab:dice-producto (4.1)** ✅ per-producto desplegado (`eval_seal.py`): prod1 0.971 · prod2 0.950 · prod3 0.969 · prod4 0.975 · prod5 0.972 · prod6 0.969 · **global 0.967**.
 - **tab:resolucion (4.2)** ✅ 384/512 (medido: Dice 0.919/0.934 · B-IoU 0.500/0.566 · HD95 4.99/4.13 · ASSD 2.03/1.65) y **1280 RE-MEDIDO** (`eval_boundary_1280.py`, 2026-07-10): prod2 Dice 0.954 / B-IoU 0.674 / HD95 3.00 / ASSD 1.15 (tesis 0.952/0.663/3.23/1.23 ✓); global ASSD 0.87 (sub-píxel).
-- **tab:lopo (4.3)** ✅ **respaldado por código `_lopo.py`** (determinista, SEED=42): entrena el sellado en 4 productos desde ImageNet (sin fuga) y evalúa zero-shot en el excluido, ×5. Columna **en muestra** hardcodeada en `_lopo.py` (`INS`): prod1 0.965 · prod2 0.945 · prod3 0.966 · prod4 0.967 · prod5 0.957 (media 0.960) = tab:lopo ✓. Zero-shot per-producto 0.957/0.939/0.962/0.968/0.949 (media **0.955 ± 0.010**), caída 0.005. OJO: el `INS` de `_lopo.py` es la corrida antigua (media 0.960); el modelo desplegado actual da per-producto distinto (media 0.967, tab:dice-producto). El zero-shot (el resultado clave) es sólido; la comparación 'en muestra' usa esa referencia antigua.
+- **tab:lopo (4.3)** ✅ **RE-MEDIDO ENRIQUECIDO (2026-07-12, `experiments/lopo_seal.py`)**: entrena el sellado en 4 productos desde ImageNet (zero-shot) y un modelo con los 5 (en muestra, **mismo setup**), **guarda los 6 modelos** (`models/lopo_insample.pt`, `models/lopo_zeroshot_<prod>.pt`) y computa **Dice + Boundary-IoU/HD95/ASSD**. Zero-shot Dice 0.960/0.934/0.962/0.971/0.949 (media **0.955 ± 0.013**); **en muestra ahora CALCULADA** (ya NO hardcodeada) 0.968/0.952/0.968/0.971/0.971 (media **0.966**, consistente con tab:dice-producto 0.967 — desaparece la incoherencia del 0.960 antiguo); caída media **0.010** (prod4 iguala, caída 0.000). Borde: zero-shot B-IoU 0.699 / ASSD 1.18 px vs en muestra 0.738 / 0.90 (hueco algo mayor que en Dice). JSON: `results/lopo_seal.json`.
 - **tab:umbral (4.4)** ✅ **EXACTO** (`eval_tables.py`): AUROC 0.968; @0.50 TP21/FP8/TN148/FN2; @0.70 21/6/150/2; @0.85 17/5/151/6; @0.90 15/4/152/8; @0.95 14/2/154/9.
 - **tab:pretrain (4.5)** ✅ corregido: 0.967/0.949 · 0.978/0.972 · **e2e 0.968/0.895** · anillo cerrado 179/153 · FP 5.1%/7.1% · ES 69/141.
 - **tab:tiny (4.6)** ✅ tira GT resnet18 0.978 / tiny 0.972; e2e 0.968 / 0.969; latencias i7 4hilos ~151/83 ms (memoria 142/90.6, dentro de ruido).

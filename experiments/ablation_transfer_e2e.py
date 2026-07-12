@@ -33,7 +33,14 @@ def e2e_scores(seal_p,def_p):
     tp=int(((S>=0.5)&(L==1)).sum()); fp=int(((S>=0.5)&(L==0)).sum())
     return au,tp,int(L.sum()),fp,int((L==0).sum()),fails
 
+_res={}
 for tag,sp,dp in [("ImageNet   ","models/best_lite_reviewed_1280.pt","models/defect_strip.pt"),
                   ("desde cero ","models/scratch_seal_1280.pt","models/defect_scratch_es.pt")]:
     au,tp,nd,fp,ng,fails=e2e_scores(sp,dp)
     print("%s  E2E AUROC=%.4f  recall %d/%d  FP %d/%d  (sellado falla en %d piezas)"%(tag,au,tp,nd,fp,ng,fails))
+    _res[tag.strip()]={"e2e_auroc":float(au),"recall":int(tp),"n_def":int(nd),"fp":int(fp),"n_good":int(ng),"seal_fail":int(fails)}
+try:
+    from seal_inspection.results import save_results
+    save_results("ablation_transfer_e2e", _res)
+except Exception as _e:
+    print("[results] skip:", _e)

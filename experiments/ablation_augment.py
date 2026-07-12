@@ -52,3 +52,17 @@ Lg=np.array(Lg)
 print("\nTira GT (data/strips/test, %d strips, %d defecto):"%(len(Lg),int(Lg.sum())))
 for k in MODELS:
     print("  %-9s AUROC tira GT %.3f"%(k,auroc(np.array(Sg[k]),Lg)))
+
+try:
+    from seal_inspection.results import save_results
+    save_results("ablation_augment", {
+        "n_def": int(L.sum()), "n_good": int((L == 0).sum()),
+        "variants": {k: {
+            "e2e_auroc": float(auroc(np.array(Sc[k]), L)),
+            "gt_auroc": float(auroc(np.array(Sg[k]), Lg)),
+            "recall": int(((np.array(Sc[k]) >= 0.5) & (L == 1)).sum()),
+            "fp": int(((np.array(Sc[k]) >= 0.5) & (L == 0)).sum()),
+        } for k in MODELS},
+    })
+except Exception as _e:
+    print('[results] skip:', _e)

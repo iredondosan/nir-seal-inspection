@@ -23,12 +23,16 @@ requieren los datos (`data/`) y los pesos (`models/`) locales.
   ImageNet** (sin fuga entre productos), y se evalúa en el producto excluido con **cero de sus
   etiquetas** (*zero-shot*). Determinista (`SEED=42`).
 - **Métrica:** Dice por pieza (`dice_one`: `sigmoid > 0.5`, Dice suavizado) promediado sobre las
-  piezas del producto excluido → columna **zero-shot**. La columna **en muestra** es el Dice de
-  validación de ese producto cuando **sí** está en el entrenamiento (referencia).
-- **Resultado:** zero-shot **0,955 ± 0,010** frente a **0,960** en muestra → caída media de solo
-  **~0,005** Dice (prod4 incluso iguala su rendimiento en muestra). El sellado no memoriza cada
-  formato: aprende la señal estructural común (producto oscuro → reborde brillante → cinta).
-- **Coste:** entrena 5 modelos de sellado a 1280 px (~85 min con GPU).
+  piezas del producto excluido → columna **zero-shot**. La columna **en muestra** se
+  **calcula** entrenando un modelo con los 5 productos (mismo setup ImageNet) y midiendo el Dice de
+  validación de cada producto —comparación consistente—; se añaden métricas de **borde** (Boundary-IoU/HD95/ASSD).
+- **Resultado:** zero-shot **0,955 ± 0,013** frente a **0,966** en muestra (calculada, mismo setup) →
+  caída media **~0,010** Dice (prod4 iguala su rendimiento en muestra, caída 0,000). En **borde** el hueco
+  es algo mayor (B-IoU zero-shot 0,699 vs 0,738; ASSD 1,18 vs 0,90 px), coherente con que el Dice atenúa
+  los errores de contorno (Tabla 4.2). El sellado no memoriza cada formato: aprende la señal estructural
+  común (producto oscuro → reborde brillante → cinta).
+- **Coste:** entrena **6 modelos** (5 zero-shot + 1 in-sample) a 1280 px (~2,5 h GPU). Los modelos se
+  **guardan** (`models/lopo_*.pt`) → cualquier métrica futura es una evaluación rápida, sin re-entrenar. JSON: `results/lopo_seal.json`.
 
 ## LOPO de prod6 — detección de defecto en un producto *few-shot*
 

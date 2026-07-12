@@ -42,3 +42,14 @@ for thr in [0.30, 0.50, 0.70]:
     tp = int(((scores >= thr) & (labels == 1)).sum()); fp = int(((scores >= thr) & (labels == 0)).sum())
     print(f"  @{thr:.2f}: recall {tp}/{int(labels.sum())} ({tp/labels.sum():.0%})  FP {fp}/{int((labels==0).sum())} ({fp/(labels==0).sum():.1%})")
 print(f"  min defect score = {pos.min():.3f}")
+
+try:
+    from seal_inspection.results import save_results
+    save_results("eval_tiny_e2e", {
+        "auroc": float(au), "n_def": int(labels.sum()), "n_good": int((labels == 0).sum()),
+        "min_defect_score": float(pos.min()),
+        "operating_points": {str(thr): {"recall": int(((scores >= thr) & (labels == 1)).sum()),
+                                        "fp": int(((scores >= thr) & (labels == 0)).sum())} for thr in [0.30,0.50,0.70]},
+    })
+except Exception as _e:
+    print('[results] skip:', _e)

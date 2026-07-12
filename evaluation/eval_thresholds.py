@@ -53,3 +53,14 @@ with open(f"{R}/outputs/defect_scores.csv", "w") as f:
     for s, l in zip(scores, labels):
         f.write(f"{s:.5f},{l}\n")
 print("wrote outputs/defect_scores.csv")
+
+try:
+    from seal_inspection.results import save_results
+    save_results("eval_thresholds", {
+        "best_f1_threshold": float(best[1]), "best_f1": float(best[0]),
+        "zero_miss_threshold": float(thr0), "zero_miss_fp": int(fp0),
+        "n_def": int(P), "n_good": int(N),
+        "lowest_defect_scores": [float(x) for x in sorted(pos)[:3]],
+    })
+except Exception as _e:
+    print('[results] skip:', _e)

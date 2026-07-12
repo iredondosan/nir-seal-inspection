@@ -57,3 +57,13 @@ for k in ["prod1","prod2","prod3","prod4","prod5","prod6"]:
 allv=[d for v in per.values() for d in v]
 print("  GLOBAL (mean over %d val imgs) = %.4f"%(len(allv),np.mean(allv)))
 print("  stored val_dice in checkpoint = %.4f"%ck.get("val_dice",float("nan")))
+
+try:
+    from seal_inspection.results import save_results
+    save_results("eval_seal", {
+        "per_product": {k: float(sum(per[k])/len(per[k])) for k in per},
+        "global": float(sum(allv)/len(allv)),
+        "checkpoint_val_dice": float(ck.get("val_dice", float("nan"))),
+    })
+except Exception as _e:
+    print('[results] skip:', _e)

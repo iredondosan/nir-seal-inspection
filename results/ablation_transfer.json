@@ -1,0 +1,18 @@
+{
+  "n_def": 21,
+  "n_good": 132,
+  "imagenet": {
+    "seal_val_dice": 0.9671792189280192,
+    "e2e_auroc": 0.9628427128427128,
+    "recall": 19,
+    "fp": 8,
+    "min_defect_score": 1.0259886948915664e-05
+  },
+  "scratch": {
+    "seal_val_dice": 0.9491611023743948,
+    "e2e_auroc": 0.9711399711399712,
+    "recall": 21,
+    "fp": 18,
+    "min_defect_score": 0.7384149432182312
+  }
+}

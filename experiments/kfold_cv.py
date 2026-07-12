@@ -49,3 +49,16 @@ print(f"E2E AUROC : mean {np.mean(aus):.3f}  std {np.std(aus):.3f}  range [{min(
 print(f"recall@0.5: range {min(recs)}-{max(recs)}/{rows[0][3]}   FP range {min(fps)}-{max(fps)}/{rows[0][5]}")
 print(f"seal_1313 caught in {sum(1 for r in rows if r[6] >= THR)}/{K} folds")
 open(f"{R}/outputs/kfold_done.flag", "w").write("done")
+
+try:
+    from seal_inspection.results import save_results
+    save_results("kfold_cv", {
+        "auroc_mean": float(np.mean(aus)), "auroc_std": float(np.std(aus)),
+        "auroc_range": [float(min(aus)), float(max(aus))],
+        "recall_range": [int(min(recs)), int(max(recs))], "n_def": int(rows[0][3]),
+        "seal_1313_caught_folds": int(sum(1 for r in rows if r[6] >= THR)), "k": int(K),
+        "per_fold": [{"fold": int(r[0]), "auroc": float(r[1]), "recall": int(r[2]),
+                      "fp": int(r[4]), "seal_1313": float(r[6])} for r in rows],
+    })
+except Exception as _e:
+    print('[results] skip:', _e)

@@ -1,0 +1,18 @@
+{
+  "ImageNet": {
+    "e2e_auroc": 0.967948717948718,
+    "recall": 21,
+    "n_def": 23,
+    "fp": 8,
+    "n_good": 156,
+    "seal_fail": 0
+  },
+  "desde cero": {
+    "e2e_auroc": 0.8946488294314381,
+    "recall": 20,
+    "n_def": 23,
+    "fp": 11,
+    "n_good": 156,
+    "seal_fail": 26
+  }
+}

@@ -58,3 +58,13 @@ for F, caps in FOLDS.items():
 print(f"\n  per-capture recall: {cap_hits}/{cap_tot}")
 print(f"  per-pack recall:    {pack_hits}/3")
 open(f"{R}/outputs/lopo_done.flag", "w").write("done")
+
+try:
+    from seal_inspection.results import save_results
+    save_results("lopo_prod6", {
+        "per_capture_recall": [int(cap_hits), int(cap_tot)],
+        "per_pack_recall": [int(pack_hits), 3],
+        "folds": {str(F): [round(float(s), 4) for s in results[F] if s is not None] for F in results},
+    })
+except Exception as _e:
+    print('[results] skip:', _e)

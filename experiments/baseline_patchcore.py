@@ -96,6 +96,13 @@ def main():
         pr, rc = tp / (tp + fp + 1e-9), tp / (tp + fn + 1e-9); f1 = 2 * pr * rc / (pr + rc + 1e-9)
         if f1 > best[0]:
             best = (f1, pr, rc, th)
+    try:
+        from seal_inspection.results import save_results
+        save_results("baseline_patchcore", {"auroc": float(auroc), "best_f1": float(best[0]),
+            "precision": float(best[1]), "recall": float(best[2]), "threshold": float(best[3]),
+            "n_def": int(len(pos)), "n_good": int(len(neg))})
+    except Exception as _e:
+        print("[results] skip:", _e)
     print(f"ANOMALY (good-only) test: AUROC {auroc:.3f}  | best-F1 {best[0]:.3f} (P{best[1]:.2f} R{best[2]:.2f})  "
           f"| {len(pos)} defect / {len(neg)} good", flush=True)
 

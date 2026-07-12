@@ -58,3 +58,16 @@ for tag, seal_ck, s in [("ImageNet", im_sk, im_s), ("from-scratch", sc_sk, sc_s)
     au, tp, fp, mn = stats(s)
     vd = float(seal_ck.get("val_dice", float("nan")))
     print(f"{tag:12} {vd:12.3f} {au:10.3f} {str(tp)+'/'+str(int((labels==1).sum())):>11} {str(fp)+'/'+str(int((labels==0).sum())):>7} {mn:8.3f}")
+
+try:
+    from seal_inspection.results import save_results
+    _ai = stats(im_s); _as = stats(sc_s)
+    save_results("ablation_transfer", {
+        "n_def": int((labels == 1).sum()), "n_good": int((labels == 0).sum()),
+        "imagenet": {"seal_val_dice": float(im_sk.get("val_dice", float("nan"))),
+                     "e2e_auroc": float(_ai[0]), "recall": int(_ai[1]), "fp": int(_ai[2]), "min_defect_score": float(_ai[3])},
+        "scratch": {"seal_val_dice": float(sc_sk.get("val_dice", float("nan"))),
+                    "e2e_auroc": float(_as[0]), "recall": int(_as[1]), "fp": int(_as[2]), "min_defect_score": float(_as[3])},
+    })
+except Exception as _e:
+    print('[results] skip:', _e)

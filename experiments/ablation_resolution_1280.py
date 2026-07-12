@@ -60,3 +60,14 @@ print("BOUNDARY @1280 (modelo desplegado):")
 if "prod2" in res:
     d,b,h,a=agg(res["prod2"]); print("  prod2:   Dice %.3f  B-IoU %.3f  HD95 %.2f  ASSD %.2f  (n=%d)"%(d,b,h,a,len(res["prod2"])))
 d,b,h,a=agg(allm); print("  overall: Dice %.3f  B-IoU %.3f  HD95 %.2f  ASSD %.2f  (n=%d)"%(d,b,h,a,len(allm)))
+
+try:
+    from seal_inspection.results import save_results
+    _k = ["dice", "biou", "hd95", "assd"]
+    save_results("ablation_resolution_1280", {
+        "prod2": dict(zip(_k, [float(x) for x in agg(res["prod2"])])) if "prod2" in res else None,
+        "overall": dict(zip(_k, [float(x) for x in agg(allm)])),
+        "n_overall": len(allm),
+    })
+except Exception as _e:
+    print('[results] skip:', _e)

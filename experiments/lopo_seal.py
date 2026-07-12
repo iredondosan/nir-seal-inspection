@@ -132,6 +132,32 @@ def dice_one(model, im3, mk):
     o = ETF(image=im3, mask=mk); x = o["image"].unsqueeze(0).to(dev); y = o["mask"].float().unsqueeze(0).unsqueeze(0).to(dev)
     p = (torch.sigmoid(model(x)) > THRESH).float(); return ((2*(p*y).sum()+1)/(p.sum()+y.sum()+1)).item()
 
+from scipy.ndimage import binary_erosion, distance_transform_edt
+BDPX = 5.0
+def _bd(m):
+    return m.astype(bool) & ~binary_erosion(m.astype(bool), iterations=1, border_value=0)
+@torch.no_grad()
+def metrics_one(model, im3, mk):
+    """Dice (suavizado, como dice_one) + Boundary-IoU/HD95/ASSD, a resolucion IMG."""
+    o = ETF(image=im3, mask=mk); x = o["image"].unsqueeze(0).to(dev)
+    gt = (o["mask"].cpu().numpy() > 0).astype(np.uint8)
+    pr = (torch.sigmoid(model(x))[0, 0].cpu().numpy() > THRESH).astype(np.uint8)
+    inter = int((gt & pr).sum()); dice = (2*inter + 1) / (int(pr.sum()) + int(gt.sum()) + 1)
+    bg, bp = _bd(gt), _bd(pr)
+    if bg.sum() == 0 or bp.sum() == 0:
+        return {"dice": float(dice), "biou": 0.0, "hd95": float("inf"), "assd": float("inf")}
+    dtg, dtp = distance_transform_edt(~bg), distance_transform_edt(~bp)
+    dd = np.concatenate([dtg[bp], dtp[bg]])
+    Gb, Pb = gt.astype(bool) & (dtg <= BDPX), pr.astype(bool) & (dtp <= BDPX)
+    biou = (Gb & Pb).sum() / max(1, (Gb | Pb).sum())
+    return {"dice": float(dice), "biou": float(biou), "hd95": float(np.percentile(dd, 95)), "assd": float(dd.mean())}
+def _agg(rows):
+    return {k: float(np.mean([r[k] for r in rows])) for k in ["dice", "biou", "hd95", "assd"]}
+def _save_model(model, rel):
+    torch.save({"state_dict": {k: v.detach().cpu() for k, v in model.state_dict().items()},
+                "encoder": ENC, "img": IMG, "thresh": THRESH, "mean": IM_MEAN, "std": IM_STD}, f"{R}/{rel}")
+    print("  [saved]", rel, flush=True)
+
 def run_fold(heldout, per, cut):
     train, val = [], []
     for prod in per:
@@ -157,19 +183,77 @@ def run_fold(heldout, per, cut):
         vd = np.mean([dice_one(model, im, mk) for im, mk in val]) if val else 0.
         if vd >= best: best = vd; best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
     if best_state: model.load_state_dict(best_state)
-    model.eval(); hd = float(np.mean([dice_one(model, im, mk) for im, mk in test]))
-    return hd, len(test), float(best)
+    model.eval()
+    _save_model(model, f"models/lopo_zeroshot_{heldout}.pt")
+    return _agg([metrics_one(model, im, mk) for im, mk in test]), len(test), float(best)
+
+PRODS = ["prod1", "prod2", "prod3", "prod4", "prod5"]
+
+
+def run_insample(per, cut):
+    """In-sample reference, COMPUTED (not hardcoded): train ONE model on ALL 5 products
+    (ImageNet base, same 1280/epochs/aug as the zero-shot folds), holding out VAL_PER pieces
+    per product, and return {prod: validation Dice}. This is the apples-to-apples
+    'con el producto incluido' baseline for the LOPO comparison (same setup as zero-shot)."""
+    train, val_by = [], {}
+    for prod in PRODS:
+        samps = per[prod][:]; random.Random(SEED).shuffle(samps)
+        forced = [s for s in samps if s[2] in FORCE_TRAIN]; rest = [s for s in samps if s[2] not in FORCE_TRAIN]
+        vp = VAL_PER if len(rest) >= 6 else 0
+        val_by[prod] = [(im, mk) for im, mk, _ in rest[:vp]]
+        train += [(im, mk) for im, mk, _ in rest[vp:]+forced]
+    allval = [x for v in val_by.values() for x in v]
+    dl = torch.utils.data.DataLoader(TR(train, SAMPLES, cut), batch_size=BATCH, shuffle=True)
+    model = smp.Unet(ENC, encoder_weights="imagenet", in_channels=3, classes=1).to(dev)
+    opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+    sch = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=EPOCHS)
+    amp = (dev == "cuda"); scaler = torch.amp.GradScaler("cuda", enabled=amp)
+    best, best_state = 0., None
+    for ep in range(1, EPOCHS+1):
+        model.train()
+        for x, y in dl:
+            x, y = x.to(dev), y.to(dev); opt.zero_grad()
+            with torch.amp.autocast("cuda", enabled=amp): lo = model(x); L = bce(lo, y) + dloss(lo, y)
+            scaler.scale(L).backward(); scaler.step(opt); scaler.update()
+        sch.step(); model.eval()
+        vd = np.mean([dice_one(model, im, mk) for im, mk in allval]) if allval else 0.
+        if vd >= best: best = vd; best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+    if best_state: model.load_state_dict(best_state)
+    model.eval()
+    _save_model(model, "models/lopo_insample.pt")
+    return {prod: _agg([metrics_one(model, im, mk) for im, mk in vb]) for prod, vb in val_by.items()}
+
 
 print("loading samples...", flush=True); per = load_per_product()
 print("pieces per product:", {k: len(v) for k, v in per.items()}, flush=True)
-INS = {"prod1": 0.965, "prod2": 0.945, "prod3": 0.966, "prod4": 0.967, "prod5": 0.957}
+
+print("=== IN-SAMPLE: training one model on ALL 5 products (ImageNet, same setup) ===", flush=True)
+INS = run_insample(per, load_cutouts(PRODS))
+print("in-sample per product:", {k: round(v["dice"], 3) for k, v in INS.items()}, flush=True)
+
 res = {}
-for heldout in ["prod1", "prod2", "prod3", "prod4", "prod5"]:
+for heldout in PRODS:
     cut = load_cutouts([p for p in per if p != heldout])
-    hd, n, bv = run_fold(heldout, per, cut); res[heldout] = hd
-    print("LOPO %-6s zero-shot Dice %.3f on %d pieces (train-val best %.3f)  | in-sample %.3f  drop %.3f"
-          % (heldout, hd, n, bv, INS[heldout], INS[heldout]-hd), flush=True)
-d = list(res.values())
-print("\nLOPO prod1-5 ZERO-SHOT Dice: %.3f +/- %.3f  range [%.3f, %.3f]" % (np.mean(d), np.std(d), min(d), max(d)), flush=True)
-print("in-sample (deployed) mean prod1-5: %.3f" % np.mean(list(INS.values())), flush=True)
+    mm, n, bv = run_fold(heldout, per, cut); res[heldout] = mm
+    print("LOPO %-6s zero-shot  Dice %.3f  B-IoU %.3f  HD95 %.2f  ASSD %.2f  (n=%d, best-val %.3f) | in-sample Dice %.3f  caida %.3f"
+          % (heldout, mm["dice"], mm["biou"], mm["hd95"], mm["assd"], n, bv, INS[heldout]["dice"], INS[heldout]["dice"]-mm["dice"]), flush=True)
+
+MK = ["dice", "biou", "hd95", "assd"]
+zs_mean = {k: float(np.mean([res[p][k] for p in PRODS])) for k in MK}
+is_mean = {k: float(np.mean([INS[p][k] for p in PRODS])) for k in MK}
+zs_dice_std = float(np.std([res[p]["dice"] for p in PRODS]))
+print("\nZERO-SHOT  Dice %.4f +/- %.4f  |  B-IoU %.3f  HD95 %.2f  ASSD %.2f"
+      % (zs_mean["dice"], zs_dice_std, zs_mean["biou"], zs_mean["hd95"], zs_mean["assd"]), flush=True)
+print("IN-SAMPLE  Dice %.4f  |  caida media (Dice) %.4f" % (is_mean["dice"], is_mean["dice"]-zs_mean["dice"]), flush=True)
+
+import json
+from seal_inspection.results import save_results
+out = {"metric_keys": MK, "zero_shot": res, "in_sample": INS,
+       "zero_shot_mean": zs_mean, "zero_shot_dice_std": zs_dice_std, "in_sample_mean": is_mean,
+       "caida": {p: round(INS[p]["dice"] - res[p]["dice"], 4) for p in PRODS},
+       "caida_media_dice": round(is_mean["dice"] - zs_mean["dice"], 4),
+       "models": {"in_sample": "models/lopo_insample.pt",
+                  "zero_shot": {p: f"models/lopo_zeroshot_{p}.pt" for p in PRODS}}}
+json.dump(out, open(f"{R}/outputs/lopo_seal_results.json", "w"), indent=2)
+save_results("lopo_seal", out)
 open(f"{R}/outputs/lopo_seal.done", "w").write("done")
