@@ -1,0 +1,115 @@
+{
+  "cpu": "i7-12700K",
+  "threads": 4,
+  "n": 40,
+  "engine": "onnxruntime 1.27.0",
+  "note": "median of N single-inference runs after warm-up; random input (latency is value-independent).",
+  "fp32": {
+    "seal_1280": {
+      "median_ms": 342.5,
+      "p90_ms": 345.2,
+      "min_ms": 337.9
+    },
+    "seal_512": {
+      "median_ms": 49.2,
+      "p90_ms": 50.3,
+      "min_ms": 48.7
+    },
+    "seal_384": {
+      "median_ms": 26.0,
+      "p90_ms": 26.1,
+      "min_ms": 25.6
+    },
+    "defect_resnet18": {
+      "median_ms": 65.1,
+      "p90_ms": 65.5,
+      "min_ms": 64.7
+    },
+    "defect_tiny": {
+      "median_ms": 39.9,
+      "p90_ms": 40.2,
+      "min_ms": 39.4
+    }
+  },
+  "int8_dynamic": {
+    "seal_1280": {
+      "median_ms": 2079.3,
+      "p90_ms": 2101.2,
+      "min_ms": 2006.1
+    },
+    "defect_resnet18": {
+      "median_ms": 371.6,
+      "p90_ms": 380.7,
+      "min_ms": 359.0
+    },
+    "defect_tiny": {
+      "median_ms": 181.2,
+      "p90_ms": 185.2,
+      "min_ms": 179.1
+    }
+  },
+  "e2e_resnet18": {
+    "median_ms": 634.5,
+    "n": 18,
+    "pieces_per_min_4c": 95,
+    "stages_median_ms": {
+      "ms_seal": 544.3,
+      "ms_unroll": 10.0,
+      "ms_defect": 80.5
+    }
+  },
+  "e2e_tiny": {
+    "median_ms": 602.8,
+    "n": 18,
+    "pieces_per_min_4c": 100
+  },
+  "int8_static": {
+    "note": "static QDQ quantization (deploy/quantize_int8.py --res, per-channel, 40 calib imgs). Helps at LOW thread counts (~2x at 1t), modest at 4t, slower at 20t; ~97% mask agreement; 14.4->4.2 MB. Contrast int8_dynamic above (always slower). Attractive for few-core edge x86.",
+    "seal_384": {
+      "fp32_ms": {
+        "1": 88.3,
+        "2": 46.8,
+        "4": 25.4,
+        "20": 16.9
+      },
+      "int8_ms": {
+        "1": 39.0,
+        "2": 25.9,
+        "4": 19.5,
+        "20": 22.3
+      },
+      "speedup": {
+        "1": 2.27,
+        "2": 1.81,
+        "4": 1.31,
+        "20": 0.76
+      },
+      "mask_agreement_pct": 97.44
+    },
+    "seal_1280": {
+      "fp32_ms": {
+        "1": 1021.5,
+        "2": 590.7,
+        "4": 384.7,
+        "20": 306.4
+      },
+      "int8_ms": {
+        "1": 515.0,
+        "2": 375.1,
+        "4": 315.6,
+        "20": 340.4
+      },
+      "speedup": {
+        "1": 1.98,
+        "2": 1.57,
+        "4": 1.22,
+        "20": 0.9
+      },
+      "mask_agreement_pct": 97.17
+    },
+    "size_mb": {
+      "fp32": 14.4,
+      "int8": 4.2
+    }
+  }
+}

@@ -13,9 +13,10 @@ ap.add_argument("--model", default=f"{ROOT}/models/seal_lite_multiprod.onnx")
 ap.add_argument("--out",   default=f"{ROOT}/models/seal_lite_multiprod_int8.onnx")
 ap.add_argument("--prods", default="prod1,prod2,prod3,prod4,prod5")
 ap.add_argument("--per",   type=int, default=8, help="calib images per product")
+ap.add_argument("--res",   type=int, default=384, help="input resolution (384 edge / 1280 deployed)")
 args=ap.parse_args()
 FP32=args.model; INT8=args.out; PREP=FP32.replace(".onnx","_prep.onnx")
-IMG=384; MARGIN=40
+IMG=args.res; MARGIN=40
 MEAN=np.array((.485,.456,.406),np.float32); STD=np.array((.229,.224,.225),np.float32)
 
 def norm(g):

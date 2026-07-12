@@ -1,6 +1,6 @@
 # NIR Seal Inspection
 
-**Deep-learning inspection of the heat-sealed flange of food trays, from NIR line-scan images — optimized for CPU / edge (Rust) deployment without a GPU.**
+**Deep-learning inspection of the heat-sealed flange of food trays, from NIR line-scan images — optimized for CPU / edge deployment without a GPU.**
 
 A NIR line-scan camera images trays crossing the gap between two conveyors. The goal is to inspect the heat-sealed flange (the *seal*) of each tray for contamination and sealing defects. Because the camera is **free-running** (no encoder trigger), packs appear with non-rigid wavy distortion, so the pipeline **follows the real seal edges** instead of globally rectifying the image.
 
@@ -47,7 +47,7 @@ data_prep/           make_{masks,strips,holdout}.py · predict_to_cvat*.py
 deploy/              quantize_int8.py · bench_cpu.py · export_demo_onnx.py · pipeline_e2e.py
 figures/             thesis-figure scripts (need the private data)
 demo/                Interactive Streamlit demo (ONNX, CPU; assets via Releases)
-rust_infer/          Rust ONNX inference app (edge deployment)
+rust_infer/          Rust `ort` seal-benchmark stub (edge target, source only)
 docs/                SOURCE_OF_TRUTH.md (result-to-code traceability ledger)
 ```
 
@@ -90,7 +90,7 @@ The client's NIR images are proprietary and are **not** shared, so the demo ship
 
 ## Deployment
 
-The seal stage is exported to **INT8 ONNX (~4.2 MB)** and runs via the Rust `ort` app in `rust_infer/` on low-power x86 (no GPU), ~19 ms/pack single-thread. Region overlap (Dice) hides thin-ring edge errors, so evaluation also reports **Boundary-IoU, HD95, ASSD**, and an inference-time **quality score** (`deploy/quality_score.py`, no ground truth needed) flags low-confidence predictions for review.
+The deployed pipeline runs **FP32 ONNX on CPU** — seal @1280 ≈ 342 ms, full pack ≈ 630 ms → **~100 packs/min on 4 threads** (i7-12700K; `results/latency.json`, `demo/bench_latency.py`). For **few-core edge x86** the seal stage can also be exported to **static-INT8 ONNX (~4.2 MB, 384 px)** via `deploy/quantize_int8.py` (97% mask agreement): ~19 ms at 4 threads / ~39 ms single-thread (**1.3–2.3× faster than FP32**, 3.4× smaller); a minimal Rust `ort` benchmark stub in [`rust_infer/`](rust_infer) (source only) demonstrates this path. Region overlap (Dice) hides thin-ring edge errors, so evaluation also reports **Boundary-IoU, HD95, ASSD**, and an inference-time **quality score** (`deploy/quality_score.py`, no ground truth needed) flags low-confidence predictions for review.
 
 ## Data availability
 

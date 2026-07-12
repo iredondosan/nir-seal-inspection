@@ -126,8 +126,7 @@ variety without capturing more defective packs.
 
 ## 9. Deployment
 
-The seal stage is exported to ONNX and quantized to **INT8 (~4.2 MB)**, run via the Rust
-`ort` app in [`rust_infer/`](rust_infer) on low-power x86 (no GPU, ~19 ms/pack single-thread).
+The deployed pipeline runs FP32 ONNX on CPU (seal @1280 ≈ 342 ms, full pack ≈ 630 ms → ~100 packs/min at 4 threads; `results/latency.json`). For few-core edge x86 the seal stage can also be exported to static **INT8 ONNX (~4.2 MB, 384 px)** — ~19 ms at 4 threads / ~39 ms single-thread (1.3–2.3× faster than FP32, 3.4× smaller); a minimal Rust `ort` benchmark stub in [`rust_infer/`](rust_infer) (source only) demonstrates it.
 An inference-time **quality score** (geometry + probability-map confidence, no ground truth
 needed — [`deploy/quality_score.py`](deploy/quality_score.py)) flags low-confidence
 predictions for review. CPU latencies are in `REPRODUCE.md` (Table 4.8).

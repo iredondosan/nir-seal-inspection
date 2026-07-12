@@ -135,6 +135,6 @@ Lección: **validar la aumentación de extremo a extremo, no en la etapa aislada
 - ✅ INT8 en despliegue → §4.10: seal INT8@384 ≈ **19 ms/4 hilos** (i7-12700K) vs fp32@1280 ≈ 341 ms (~18×), 4,2 MB (3,4× menos). Medido consistente con SYSTEM_REPORT §6.
 
 **Pendiente / posible incorporación futura:**
-- Despliegue en **Rust** (`rust_infer/`) — la memoria lo cita como línea futura; existe código real.
+- Despliegue en **Rust** (`rust_infer/`) — la memoria lo cita como línea futura; **existe un stub real de 37 líneas** (`main.rs`) que solo cronometra el sellado @384 (input aleatorio, multi-hilo), **sin toolchain en el box** → sin construir. Latencia desplegada real (FP32 ONNX) en `results/latency.json` (`demo/bench_latency.py`); INT8 estático @384 = ~19 ms@4h / 39 ms@1h, 4,2 MB, 97% concordancia (`deploy/quantize_int8.py`).
 - `defect_rebal_*` (rebalanceo, oversample defectos pequeños) — experimento no reportado.
 - `eval_tta.py` (test-time augmentation) — no reportado.
