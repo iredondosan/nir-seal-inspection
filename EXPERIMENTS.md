@@ -81,7 +81,15 @@ requieren los datos (`data/`) y los pesos (`models/`) locales.
     acoplado**: ayuda a la etapa con datos escasos (sellado) y ese beneficio **se propaga** al
     sistema completo, porque la calidad del sellado condiciona la del defecto.
 
-## Ablación de aumentación de la tira — roll / sealjit (Tabla 4.7)
+## Ablación de copy-paste — ¿responde PI-4? (Tabla 4.7)
+
+**Script:** `evaluation/eval_copypaste.py` · modelo sin copy-paste: `python training/train_defect.py --sealjit --nopaste --out models/defect_nopaste.pt`
+
+- **Objetivo:** aislar la aportación de la aumentación **copy-paste de defectos reales** (núcleo de PI-4): activarla/desactivarla con el resto del protocolo fijo (ambos `--sealjit`, mismo seed/split, sellado @1280; flag `--nopaste`).
+- **Resultado:** copy-paste **ON** (`defect_jit`) 0.984 GT / **0.975 e2e** / 23-23 / 6 FP; **OFF** (`defect_nopaste`) 0.961 GT / **0.948 e2e** / 19-23 / 4 FP. **ΔE2E +0.027, ΔGT +0.023** — fuera del ruido de reentrenamiento (±0.01), a diferencia de roll/sealjit.
+- **Lectura:** el copy-paste es **decisivo** con datos escasos (solo ~84 tiras defectuosas reales); sin él el detector subdetecta. **Responde afirmativamente a PI-4 por ablación.** `results/ablation_copypaste.json`.
+
+## Ablación de aumentación de la tira — roll / sealjit (Tabla 4.8)
 
 **Script:** `experiments/ablation_augment.py`
 
@@ -134,7 +142,7 @@ requieren los datos (`data/`) y los pesos (`models/`) locales.
 
 - **INT8 (estático):** reduce el sellado a 4,2 MB pero **no es desplegable** — fragmenta el anillo fino y la
   localización falla (61/179 @384, 0/179 @1280; `results/int8_quality.json`). La opción rápida real es **FP32 @384**.
-- **Comparación de sistemas (Tabla 4.9):** 6 configuraciones (sellado 1280/512/384 × ResNet18/TinyUNet) sobre el
+- **Comparación de sistemas (Tabla 4.10):** 6 configuraciones (sellado 1280/512/384 × ResNet18/TinyUNet) sobre el
   conjunto común → AUROC E2E 0,964–0,970, equivalentes (±0,01); el desplegado reproduce tab:umbral (0,968·21/23).
   `results/systems_e2e.json`.
 - **Latencia (ONNX, i7-12700K):** sellado 342 ms@1280 / 26 ms@384; defecto 65/40 ms; pipeline E2E ~630 ms →

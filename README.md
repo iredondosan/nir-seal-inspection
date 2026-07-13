@@ -65,7 +65,8 @@ Each thesis table/figure has a named script and a `make` target:
 ```bash
 make table-4.1        # per-product seal Dice
 make table-4.4        # defect threshold sweep (operating point)
-make table-4.7        # augmentation ablation
+make table-4.7        # copy-paste ablation (PI-4)
+make table-4.8        # augmentation ablation (roll/sealjit)
 make deploy-onnx      # export + INT8 quantize + CPU benchmark
 make help             # list every target
 ```

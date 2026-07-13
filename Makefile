@@ -5,7 +5,7 @@ PYTHON ?= python
 
 .DEFAULT_GOAL := help
 .PHONY: help install table-4.1 table-4.2 table-4.3 table-4.4 table-4.5 table-4.6 \
-        table-4.7 table-4.8 kfold patchcore errors deploy-onnx demo
+        table-4.7 table-4.8 table-4.9 kfold patchcore errors deploy-onnx demo
 
 help:  ## List targets
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -27,9 +27,12 @@ table-4.5:    ## Transfer-learning ablation (isolated + end-to-end)
 	$(PYTHON) experiments/ablation_transfer_e2e.py
 table-4.6:    ## TinyUNet capacity ablation
 	$(PYTHON) evaluation/eval_tiny_e2e.py
-table-4.7:    ## Augmentation ablation (roll / sealjit)
+table-4.7:    ## Copy-paste ablation (PI-4; retrains defect w/o copy-paste, GPU)
+	$(PYTHON) training/train_defect.py --sealjit --nopaste --out models/defect_nopaste.pt
+	$(PYTHON) evaluation/eval_copypaste.py
+table-4.8:    ## Augmentation ablation (roll / sealjit)
 	$(PYTHON) experiments/ablation_augment.py
-table-4.8:    ## Deployment CPU latencies
+table-4.9:    ## Deployment CPU latencies
 	$(PYTHON) deploy/bench_cpu.py
 kfold:        ## 5-fold CV of the defect model (retrains, GPU)
 	$(PYTHON) experiments/kfold_cv.py

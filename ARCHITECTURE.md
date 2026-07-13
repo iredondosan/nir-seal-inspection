@@ -73,7 +73,7 @@ the end-to-end inference driver is [`seal_inspection/pipeline.py`](seal_inspecti
     smooths it, turning a ragged pixel boundary into a clean, hand-drawn-like ring.
 - **Why lightweight**: the seal stage is the latency bottleneck; a MobileNetV3-small encoder
   matches a ResNet34 baseline's Dice with 6.8× fewer parameters and ~2.3× lower CPU latency
-  (Table 4.8), enabling GPU-free edge deployment.
+  (Table 4.9), enabling GPU-free edge deployment.
 
 ## 5. Unrolling — flattening the ring (`unroll_maps`)
 
@@ -129,7 +129,7 @@ variety without capturing more defective packs.
 The deployed pipeline runs FP32 ONNX on CPU (seal @1280 ≈ 342 ms, full pack ≈ 630 ms → ~100 packs/min at 4 threads; `results/latency.json`). The fast option is **FP32 @384 px** — same E2E AUROC 0.977 / 21-of-23 recall as @1280 at ~26 ms (13× faster), trading only contour precision (Dice 0.936 vs 0.963). **Static INT8 is not deployable as-is**: it keeps ~97% pixel agreement but fragments the thin ring, so ring localisation fails on most packs (`results/int8_quality.json`) — a documented negative result.
 An inference-time **quality score** (geometry + probability-map confidence, no ground truth
 needed — [`deploy/quality_score.py`](deploy/quality_score.py)) flags low-confidence
-predictions for review. CPU latencies are in `REPRODUCE.md` (Table 4.8).
+predictions for review. CPU latencies are in `REPRODUCE.md` (Table 4.9).
 
 ## 10. Design rationale, in one line each
 
