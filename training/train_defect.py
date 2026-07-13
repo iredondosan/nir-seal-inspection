@@ -23,12 +23,13 @@ _ap.add_argument("--edgepaste", action="store_true", help="bias copy-paste towar
 _ap.add_argument("--kfold", type=int, default=0, help="if >0, use fold i of k as validation (k-fold CV)")
 _ap.add_argument("--fold", type=int, default=0)
 _ap.add_argument("--rebalance", action="store_true", help="oversample small defects + bias copy-paste small")
+_ap.add_argument("--nopaste", action="store_true", help="disable copy-paste augmentation (PI-4 ablation)")
 _a, _ = _ap.parse_known_args()
 from seal_inspection.paths import ROOT; STR = f"{ROOT}/{_a.strips}"; OUT = f"{ROOT}/{_a.out}"
 SCRATCH = _a.scratch; ROLL = _a.roll; SEALJIT = _a.sealjit; EDGEPASTE = _a.edgepaste; KFOLD = _a.kfold; FOLD = _a.fold; REBALANCE = _a.rebalance
 MAXEP = _a.epochs; PATIENCE = _a.patience; VALF = _a.val_frac
 SEED = 42; random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
-HS = 128; WS = 1536; BATCH = 8; STEPS = 1200; THR = 0.5; P_PASTE = 0.7
+HS = 128; WS = 1536; BATCH = 8; STEPS = 1200; THR = 0.5; P_PASTE = 0.0 if _a.nopaste else 0.7
 MEAN = (.485, .456, .406); STD = (.229, .224, .225)
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 

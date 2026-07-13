@@ -1,0 +1,36 @@
+{
+  "question": "PI-4: aporta el copy-paste de defectos reales? copy-paste ON vs OFF, resto identico (ambos --sealjit, mismo seed/split, sellado best_lite_reviewed_1280.pt @1280).",
+  "harness": "core.py torch pipeline; misma tira predicha a las dos cabezas; hold-out 179 (E2E) y data/strips/test (GT). Umbral 0.50.",
+  "test": {
+    "holdout_e2e": 179,
+    "n_def": 23,
+    "n_good": 156,
+    "e2e_localised": 179,
+    "gt_strips": 179,
+    "gt_def": 23
+  },
+  "models": {
+    "copypaste_on": {
+      "gt_auroc": 0.9836,
+      "e2e_auroc": 0.9749,
+      "recall": 23,
+      "n_def": 23,
+      "fp": 6,
+      "n_good": 156
+    },
+    "copypaste_off": {
+      "gt_auroc": 0.9607,
+      "e2e_auroc": 0.9476,
+      "recall": 19,
+      "n_def": 23,
+      "fp": 4,
+      "n_good": 156
+    }
+  },
+  "ckpts": {
+    "copypaste_on": "models/defect_jit.pt",
+    "copypaste_off": "models/defect_nopaste.pt"
+  },
+  "delta_e2e_auroc_on_minus_off": 0.0273,
+  "delta_gt_auroc_on_minus_off": 0.0229
+}
