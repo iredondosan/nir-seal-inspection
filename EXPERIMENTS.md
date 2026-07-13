@@ -146,7 +146,7 @@ requieren los datos (`data/`) y los pesos (`models/`) locales.
   conjunto común → AUROC E2E 0,964–0,970, equivalentes (±0,01); el desplegado reproduce tab:umbral (0,968·21/23).
   `results/systems_e2e.json`.
 - **Latencia (ONNX, i7-12700K):** sellado 342 ms@1280 / 26 ms@384; defecto 65/40 ms; pipeline E2E ~630 ms →
-  ~100 piezas/min. `results/latency.json`.
+  ~95 piezas/min (≈100 con la cabeza compacta). `results/latency.json`.
 
 ---
 

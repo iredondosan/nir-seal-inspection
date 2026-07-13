@@ -27,7 +27,7 @@ This repository accompanies a Master's thesis (TFM). It contains the full source
 | End-to-end AUROC (5-fold CV) | **0.977 ± 0.004** | `experiments/kfold_cv.py` |
 | Operating point @0.5 | recall **21/23**, FP **8/156 (5.1 %)** | `evaluation/eval_thresholds.py` |
 | PatchCore baseline (unsupervised, greedy coreset) | AUROC **0.776** | `experiments/baseline_patchcore.py` |
-| Deployed latency (CPU, ONNX) | seal **342 ms** @1280 / **26 ms** @384; full pipeline **~630 ms → ~100 packs/min**; INT8 not deployable | `demo/bench_latency.py` |
+| Deployed latency (CPU, ONNX) | seal **342 ms** @1280 / **26 ms** @384; full pipeline **~630 ms → ~95 packs/min**; INT8 not deployable | `demo/bench_latency.py` |
 
 Full table-by-table traceability in [`REPRODUCE.md`](REPRODUCE.md).
 
@@ -90,7 +90,7 @@ The client's NIR images are proprietary and are **not** shared, so the demo ship
 
 ## Deployment
 
-The deployed pipeline runs **FP32 ONNX on CPU** (no GPU). On an i7-12700K (4 threads) the two stages take **~342 ms** (seal @1280 px) and **~65 ms** (defect); with cropping and unrolling, a **full pack takes ~630 ms → ~100 packs/min**, within typical line cadences (`results/latency.json`, `demo/bench_latency.py`).
+The deployed pipeline runs **FP32 ONNX on CPU** (no GPU). On an i7-12700K (4 threads) the two stages take **~342 ms** (seal @1280 px) and **~65 ms** (defect); with cropping and unrolling, a **full pack takes ~630 ms → ~95 packs/min**, within typical line cadences (`results/latency.json`, `demo/bench_latency.py`).
 
 For tighter compute budgets, running the **seal at 384 px** keeps the same end-to-end **AUROC (0.977, recall 21/23)** while cutting the seal stage **13×** (342 → 26 ms) and the full pack **~2.8×** (630 → 226 ms, ~264 packs/min), at the cost of some contour precision (Dice 0.936 vs 0.963; `results/int8_quality.json`).
 
