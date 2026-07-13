@@ -12,7 +12,7 @@ pip install -e .          # paquete + dependencias fijadas
 - **Datos** (`data/`, ~2,2 GB) y **pesos** (`models/`, ~2,0 GB) **no están en git** (tamaño + propiedad
   industrial). Deben estar presentes localmente en la raíz del repo. Las rutas se resuelven con
   `seal_inspection/paths.py` (ancla `ROOT`), así que los scripts corren desde cualquier directorio.
-- **Hold-out global vigente**: `data/holdout_labels.csv` = 179 packs (**156 correctos / 23 defectuosos**).
+- **Hold-out global vigente**: `data/holdout_labels.csv` = 179 packs (**156 correctos / 23 defectuosos**). Se genera con `python data_prep/make_holdout.py`: se muestrea **solo de piezas NO revisadas** (sin fuga por construcción; el sellado se entrena solo con revisadas), **estratificado por producto** (prod1–prod5; prod6 es solo de entrenamiento), con semilla fija propia `SEED=7` y fracciones **0,30 de defectuosas / 0,20 de correctas** por producto → escribe `data/holdout.txt` + `data/holdout_labels.csv`. (Esta semilla del hold-out, 7, es distinta de la de los experimentos, 42.)
 - **CPU vs GPU**: los *entrenamientos* usan GPU; todas las *evaluaciones* y *latencias* corren en CPU.
 - **Determinismo**: los experimentos fijan `SEED=42`.
 
