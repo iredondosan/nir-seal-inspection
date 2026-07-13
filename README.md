@@ -90,11 +90,11 @@ The client's NIR images are proprietary and are **not** shared, so the demo ship
 
 ## Deployment
 
-The deployed pipeline runs **FP32 ONNX on CPU** (no GPU). On an i7-12700K (4 threads) the two stages take **~342 ms** (seal @1280 px) and **~65 ms** (defect); with cropping and unrolling, a **full pack takes ~630 ms → ~95 packs/min**, within typical line cadences (`results/latency.json`, `demo/bench_latency.py`).
+The deployed pipeline runs **FP32 ONNX on CPU** (no GPU). On an i7-12700K (4 threads), in isolation the two stages take **~342 ms** (seal @1280 px) and **~65 ms** (defect); end-to-end (crop, seal, unroll, defect) a **full pack takes ~630 ms → ~95 packs/min** — the pipeline total is measured directly, not the sum of the isolated stages — within typical line cadences (`results/latency.json`, `demo/bench_latency.py`).
 
-For tighter compute budgets, running the **seal at 384 px** keeps the same end-to-end **AUROC (0.977, recall 21/23)** while cutting the seal stage **13×** (342 → 26 ms) and the full pack **~2.8×** (630 → 226 ms, ~264 packs/min), at the cost of some contour precision (Dice 0.936 vs 0.963; `results/int8_quality.json`).
+For tighter compute budgets, running the **seal at 384 px** keeps an **equivalent** end-to-end **AUROC (0.969 vs 0.968 deployed; recall 21/23)** while cutting the seal stage **13×** (342 → 26 ms) and the full pack **~2.8×** (630 → 226 ms, ~264 packs/min), at the cost of some contour precision (Dice 0.936 vs 0.963; `results/int8_quality.json`).
 
-**Static INT8 is not deployable as-is**: despite ~97 % pixel agreement with FP32 it fragments the thin seal ring, so ring localisation fails on most packs (61/179 @384, 0/179 @1280) — a documented negative result (`results/int8_quality.json`).
+**Static INT8 is not deployable as-is**: despite ~97 % pixel agreement with FP32 it fragments the thin seal ring, so ring localisation succeeds on **only 61/179 packs @384 and none @1280** — a documented negative result (`results/int8_quality.json`).
 
 Because region overlap (Dice) hides thin-ring edge errors, evaluation also reports **Boundary-IoU, HD95 and ASSD**, and an inference-time **quality score** (`deploy/quality_score.py`, no ground truth needed) flags low-confidence predictions for review.
 
