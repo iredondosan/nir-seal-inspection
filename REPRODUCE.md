@@ -34,7 +34,7 @@ pip install -e .          # paquete + dependencias fijadas
 | **Tabla 4.10** · Sistemas E2E (homogéneo) | `python evaluation/eval_systems_e2e.py` | 6 configs, conjunto común 176 | desplegado 0.968·21/23; todas 0.964–0.970 (±0.01) |
 | **INT8 (calidad)** | `python evaluation/eval_int8_quality.py` | INT8 vs FP32 @384/1280 | **no desplegable**: localiza 61/179 @384, 0/179 @1280 |
 | **Latencia CPU (ONNX)** | `python demo/bench_latency.py` | i7-12700K, 4 hilos | seal 342/26 ms @1280/384; defecto 65/40 ms; E2E ~630 ms→~95/min |
-| **§5.4** · Análisis de errores (FN/FP) | `python evaluation/error_analysis.py` | seal + `defect_strip.pt` | 2 FN: `seal_1313` (prod3), `seal_2381` (prod2), score ≈ 0.000 |
+| **§5.4** · Análisis de errores (FN/FP) | `python evaluation/error_analysis.py` | seal + `defect_strip.pt` | 2 FN: `seal_1313` (prod3), `seal_2381` (prod2), score ≈ 0.000; 8 FP por marcas ajenas al sellado (serigrafía / restos / marca junto al borde), no por esquinas |
 | **Fig. 4.2 / 4.6** (barrido resolución / umbrales) | `python figures/thresholds_plot.py`, `python figures/build_figs2.py` | — | figuras coinciden con sus tablas |
 
 ## Notas

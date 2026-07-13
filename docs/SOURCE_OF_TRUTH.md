@@ -82,7 +82,7 @@ Hold-out global vigente: **179 packs = 156 correctos / 23 defectuosos** (`data/h
 | Defecto aislado — AUROC (tira GT) | **0.978** | `defect_strip.pt` |
 | Extremo a extremo — AUROC (desplegado) | **0.968** | seal + `defect_strip.pt` |
 | Extremo a extremo — AUROC (5-fold CV) | **0.977 ± 0.004** (re-run 07-12; ≈0.97) | `defect_kf0..4` |
-| Punto de operación @0.50 | **recall 21/23**, FP **8/156 = 5.1 %** | 2 FN: `seal_1313` (prod3), `seal_2381` (prod2), ambos score ≈ 0.000 |
+| Punto de operación @0.50 | **recall 21/23**, FP **8/156 = 5.1 %** | 2 FN: `seal_1313` (prod3), `seal_2381` (prod2), ambos score ≈ 0.000. Los 8 FP (prod1×3 / prod2×4 / prod3×1) son **marcas ajenas al sellado** (serigrafía, marca/defecto fuera de la zona sellada, restos de líquido; inspección visual); **no** son artefactos de desenrollado en esquinas. |
 | PatchCore (línea base anomalía) | AUROC **0.776** (greedy coreset; full 0.784) | `experiments/baseline_patchcore.py` |
 | TinyUNet | AUROC 0.972 · 0.93 M (15.5× menos) | `tiny_defect.pt` |
 | prod6 — LOPO por pack | 9/9 capturas, 3/3 packs (≥0.989) | `lopo_cv.py` |
