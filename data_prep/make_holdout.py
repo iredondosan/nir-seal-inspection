@@ -7,10 +7,37 @@ Drawn ONLY from NON-reviewed packs (per-product stratified), so:
 The defect model excludes the hold-out from its training strips (make_strips reads holdout.txt).
 
 Mirrors make_strips.py pack-eligibility exactly so the splits are consistent.
-Writes data/holdout.txt (one basename per line) and prints the composition + a name,label CSV."""
-import os, random
+Writes data/holdout.txt (one basename per line) and prints the composition + a name,label CSV.
+
+El hold-out es un ARTEFACTO CONGELADO: por defecto este script carga y valida data/holdout_labels.csv
+sin re-muestrear; usa --regenerate para volver a muestrear (cambia la composicion)."""
+import os, random, argparse, glob
 import xml.etree.ElementTree as ET
 from seal_inspection.paths import ROOT
+
+_ap = argparse.ArgumentParser(description="Define/valida el hold-out GLOBAL (artefacto congelado).")
+_ap.add_argument("--regenerate", action="store_true",
+                 help="Re-muestrea el hold-out desde las anotaciones (SOBRESCRIBE el congelado y cambia la composicion). "
+                      "Por defecto: carga y valida data/holdout_labels.csv sin re-muestrear.")
+_args = _ap.parse_args()
+
+HO_TXT = f"{ROOT}/data/holdout.txt"
+HO_CSV = f"{ROOT}/data/holdout_labels.csv"
+
+# --- Hold-out CONGELADO: artefacto fijo y versionado; NO re-muestrear salvo --regenerate ---
+if os.path.exists(HO_CSV) and not _args.regenerate:
+    _rows = [ln.split(",") for ln in open(HO_CSV).read().splitlines()[1:] if ln.strip()]
+    _names = [r[0] for r in _rows]
+    _nd = sum(int(r[1]) for r in _rows)
+    _missing = [n for n in _names
+                if not (glob.glob(f"{ROOT}/data/images/*/{n}.png") or glob.glob(f"{ROOT}/data/images/*/{n}.jpg"))]
+    print(f"HOLD-OUT CONGELADO: {len(_names)} packs = {_nd} defect + {len(_names) - _nd} good  ({HO_CSV})")
+    if _missing:
+        print(f"AVISO: {len(_missing)} pieza(s) del hold-out no resuelven en data/images (p.ej. {_missing[:3]}).")
+    else:
+        print(f"Validacion OK: las {len(_names)} piezas resuelven en data/images.")
+    print("Artefacto FIJO que reproduce los resultados. Usa --regenerate para re-muestrear (cambia la composicion).")
+    raise SystemExit(0)
 SEED = 7; F_DEF = 0.30; F_GOOD = 0.20      # fraction of NON-reviewed defects / goods held out per product
 SOURCES = [("data/annotations/prod1_reviewed.xml", "prod1", "all"),
            ("data/annotations/prod2_reviewed.xml", "prod2", "all"),
