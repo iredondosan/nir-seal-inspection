@@ -100,7 +100,19 @@ Because region overlap (Dice) hides thin-ring edge errors, evaluation also repor
 
 ## Data availability
 
-The NIR images and annotations are proprietary and are **not** released. The code is fully public and every result is traceable to its script; the demo bundle provides a runnable subset. Contact the author for research access to additional data.
+The NIR images are **proprietary industrial data**, so they live in a **separate private repository** — [`iredondosan/seal-inspection-data`](https://github.com/iredondosan/seal-inspection-data) — rather than in this public repo. That repo ships, as a versioned Release (`v1.0`, ~2 GB), the raw NIR images (`data/images/`), the seal/defect annotations (`data/annotations/`) and the **frozen hold-out split** (`data/holdout_labels.csv`, 179 packs) that reproduces the reported evaluation exactly. The code stays fully public; only the data is access-controlled.
+
+**To obtain the data** (needed to reproduce the results or run the thesis-figure scripts):
+
+1. **Request access** — contact the author to be added as a collaborator on the private data repo.
+2. **Create a GitHub token** (a Personal Access Token with read access to that repo) and export it as `GH_TOKEN`.
+3. **Fetch and unpack** into `data/`:
+   ```bash
+   export GH_TOKEN=<your_token>
+   bash data_prep/fetch_data.sh      # -> data/images/ + data/annotations/ + frozen hold-out
+   ```
+
+The interactive demo needs **no** data — it bundles the ONNX weights and takes your own NIR image via the *upload* mode.
 
 ## Contact
 
